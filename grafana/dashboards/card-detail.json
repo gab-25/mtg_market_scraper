@@ -18,19 +18,6 @@
   "templating": {
     "list": [
       {
-        "name": "game",
-        "label": "Game",
-        "type": "custom",
-        "query": "Magic: The Gathering : magic,Pokémon : pokemon,One Piece : onepiece,Riftbound : riftbound",
-        "current": {
-          "text": "Magic: The Gathering",
-          "value": "magic"
-        },
-        "options": [],
-        "multi": false,
-        "includeAll": false
-      },
-      {
         "name": "search",
         "label": "Search",
         "type": "textbox",
@@ -57,12 +44,12 @@
         },
         "query": {
           "refId": "card",
-          "rawSql": "SELECT label || CASE WHEN count(*) OVER (PARTITION BY label) > 1 THEN ' · #' || id_product ELSE '' END AS __text,\n       id_product AS __value\nFROM (\n  SELECT c.name || coalesce(' · ' || coalesce(e.name, '#' || c.id_expansion), '') AS label, c.id_product\n  FROM card c\n  LEFT JOIN expansion e ON e.game = c.game AND e.id_expansion = c.id_expansion\n  WHERE c.game = '$game'\n    AND (strpos(lower(c.name), lower(${search:sqlstring})) > 0 OR c.id_product = nullif('$card', '')::int)\n) cards\nORDER BY 1, 2\nLIMIT 200",
+          "rawSql": "SELECT label || CASE WHEN count(*) OVER (PARTITION BY label) > 1 THEN ' · #' || id_product ELSE '' END AS __text,\n       id_product AS __value\nFROM (\n  SELECT c.name || coalesce(' · ' || coalesce(e.name, '#' || c.id_expansion), '') AS label, c.id_product\n  FROM card c\n  LEFT JOIN expansion e ON e.id_expansion = c.id_expansion\n  WHERE (strpos(lower(c.name), lower(${search:sqlstring})) > 0 OR c.id_product = nullif('$card', '')::int)\n) cards\nORDER BY 1, 2\nLIMIT 200",
           "editorMode": "code",
           "format": "table",
           "rawQuery": true
         },
-        "definition": "SELECT label || CASE WHEN count(*) OVER (PARTITION BY label) > 1 THEN ' · #' || id_product ELSE '' END AS __text,\n       id_product AS __value\nFROM (\n  SELECT c.name || coalesce(' · ' || coalesce(e.name, '#' || c.id_expansion), '') AS label, c.id_product\n  FROM card c\n  LEFT JOIN expansion e ON e.game = c.game AND e.id_expansion = c.id_expansion\n  WHERE c.game = '$game'\n    AND (strpos(lower(c.name), lower(${search:sqlstring})) > 0 OR c.id_product = nullif('$card', '')::int)\n) cards\nORDER BY 1, 2\nLIMIT 200",
+        "definition": "SELECT label || CASE WHEN count(*) OVER (PARTITION BY label) > 1 THEN ' · #' || id_product ELSE '' END AS __text,\n       id_product AS __value\nFROM (\n  SELECT c.name || coalesce(' · ' || coalesce(e.name, '#' || c.id_expansion), '') AS label, c.id_product\n  FROM card c\n  LEFT JOIN expansion e ON e.id_expansion = c.id_expansion\n  WHERE (strpos(lower(c.name), lower(${search:sqlstring})) > 0 OR c.id_product = nullif('$card', '')::int)\n) cards\nORDER BY 1, 2\nLIMIT 200",
         "refresh": 1,
         "sort": 0,
         "multi": false,
@@ -77,6 +64,22 @@
   },
   "panels": [
     {
+      "id": 8,
+      "type": "text",
+      "title": "Card",
+      "description": "The printing's image from Scryfall, found by its Cardmarket id. Third-party tokens, alters and some foreign printings have none.",
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display: flex; height: 100%; align-items: center; justify-content: center\"><img src=\"https://api.scryfall.com/cards/cardmarket/${card:percentencode}?format=image&version=normal\" alt=\"No image for this card\" style=\"max-width: 100%; max-height: 100%\"></div>"
+      }
+    },
+    {
       "id": 1,
       "type": "stat",
       "title": "Trend",
@@ -86,8 +89,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 0,
+        "w": 9,
+        "x": 6,
         "y": 0
       },
       "targets": [
@@ -100,7 +103,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT trend AS \"Trend\"\nFROM price\nWHERE game = '$game' AND id_product = nullif('$card', '')::int AND trend IS NOT NULL\nORDER BY day DESC\nLIMIT 1"
+          "rawSql": "SELECT trend AS \"Trend\"\nFROM price\nWHERE id_product = nullif('$card', '')::int AND trend IS NOT NULL\nORDER BY day DESC\nLIMIT 1"
         }
       ],
       "fieldConfig": {
@@ -142,8 +145,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 9,
+        "x": 15,
         "y": 0
       },
       "targets": [
@@ -156,7 +159,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT low AS \"Low\"\nFROM price\nWHERE game = '$game' AND id_product = nullif('$card', '')::int AND low IS NOT NULL\nORDER BY day DESC\nLIMIT 1"
+          "rawSql": "SELECT low AS \"Low\"\nFROM price\nWHERE id_product = nullif('$card', '')::int AND low IS NOT NULL\nORDER BY day DESC\nLIMIT 1"
         }
       ],
       "fieldConfig": {
@@ -198,9 +201,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 0
+        "w": 9,
+        "x": 6,
+        "y": 4
       },
       "targets": [
         {
@@ -212,7 +215,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH latest AS (\n  SELECT day, trend FROM price WHERE game = '$game' AND id_product = nullif('$card', '')::int AND trend IS NOT NULL ORDER BY day DESC LIMIT 1\n)\nSELECT (l.trend - p.trend) / nullif(p.trend, 0) AS \"Change 7 days\"\nFROM latest l\nCROSS JOIN LATERAL (\n  SELECT trend FROM price\n  WHERE game = '$game' AND id_product = nullif('$card', '')::int AND trend IS NOT NULL AND day <= l.day - 7\n  ORDER BY day DESC\n  LIMIT 1\n) p"
+          "rawSql": "WITH latest AS (\n  SELECT day, trend FROM price WHERE id_product = nullif('$card', '')::int AND trend IS NOT NULL ORDER BY day DESC LIMIT 1\n)\nSELECT (l.trend - p.trend) / nullif(p.trend, 0) AS \"Change 7 days\"\nFROM latest l\nCROSS JOIN LATERAL (\n  SELECT trend FROM price\n  WHERE id_product = nullif('$card', '')::int AND trend IS NOT NULL AND day <= l.day - 7\n  ORDER BY day DESC\n  LIMIT 1\n) p"
         }
       ],
       "fieldConfig": {
@@ -266,9 +269,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 0
+        "w": 9,
+        "x": 15,
+        "y": 4
       },
       "targets": [
         {
@@ -280,7 +283,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH latest AS (\n  SELECT day, trend FROM price WHERE game = '$game' AND id_product = nullif('$card', '')::int AND trend IS NOT NULL ORDER BY day DESC LIMIT 1\n)\nSELECT (l.trend - p.trend) / nullif(p.trend, 0) AS \"Change 30 days\"\nFROM latest l\nCROSS JOIN LATERAL (\n  SELECT trend FROM price\n  WHERE game = '$game' AND id_product = nullif('$card', '')::int AND trend IS NOT NULL AND day <= l.day - 30\n  ORDER BY day DESC\n  LIMIT 1\n) p"
+          "rawSql": "WITH latest AS (\n  SELECT day, trend FROM price WHERE id_product = nullif('$card', '')::int AND trend IS NOT NULL ORDER BY day DESC LIMIT 1\n)\nSELECT (l.trend - p.trend) / nullif(p.trend, 0) AS \"Change 30 days\"\nFROM latest l\nCROSS JOIN LATERAL (\n  SELECT trend FROM price\n  WHERE id_product = nullif('$card', '')::int AND trend IS NOT NULL AND day <= l.day - 30\n  ORDER BY day DESC\n  LIMIT 1\n) p"
         }
       ],
       "fieldConfig": {
@@ -336,7 +339,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 4
+        "y": 8
       },
       "targets": [
         {
@@ -348,7 +351,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT day::timestamp AS time, trend AS \"Trend\", low AS \"Low\", avg7 AS \"Avg 7 days\", avg30 AS \"Avg 30 days\"\nFROM price\nWHERE game = '$game' AND id_product = nullif('$card', '')::int AND $__timeFilter(day)\nORDER BY day"
+          "rawSql": "SELECT day::timestamp AS time, trend AS \"Trend\", low AS \"Low\", avg7 AS \"Avg 7 days\", avg30 AS \"Avg 30 days\"\nFROM price\nWHERE id_product = nullif('$card', '')::int AND $__timeFilter(day)\nORDER BY day"
         }
       ],
       "fieldConfig": {
@@ -400,7 +403,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 18
       },
       "targets": [
         {
@@ -412,7 +415,7 @@
           "editorMode": "code",
           "format": "time_series",
           "rawQuery": true,
-          "rawSql": "SELECT day::timestamp AS time, trend_foil AS \"Trend\", low_foil AS \"Low\", avg7_foil AS \"Avg 7 days\", avg30_foil AS \"Avg 30 days\"\nFROM price\nWHERE game = '$game' AND id_product = nullif('$card', '')::int AND $__timeFilter(day)\nORDER BY day"
+          "rawSql": "SELECT day::timestamp AS time, trend_foil AS \"Trend\", low_foil AS \"Low\", avg7_foil AS \"Avg 7 days\", avg30_foil AS \"Avg 30 days\"\nFROM price\nWHERE id_product = nullif('$card', '')::int AND $__timeFilter(day)\nORDER BY day"
         }
       ],
       "fieldConfig": {
@@ -464,7 +467,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 28
       },
       "targets": [
         {
@@ -476,7 +479,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT day AS \"Date\", trend AS \"Trend\", trend - prev AS \"Change\", (trend - prev) / nullif(prev, 0) AS \"Change %\"\nFROM (\n  SELECT day, trend, lag(trend) OVER (ORDER BY day) AS prev\n  FROM price\n  WHERE game = '$game' AND id_product = nullif('$card', '')::int AND trend IS NOT NULL\n) d\nORDER BY day DESC\nLIMIT 30"
+          "rawSql": "SELECT day AS \"Date\", trend AS \"Trend\", trend - prev AS \"Change\", (trend - prev) / nullif(prev, 0) AS \"Change %\"\nFROM (\n  SELECT day, trend, lag(trend) OVER (ORDER BY day) AS prev\n  FROM price\n  WHERE id_product = nullif('$card', '')::int AND trend IS NOT NULL\n) d\nORDER BY day DESC\nLIMIT 30"
         }
       ],
       "fieldConfig": {

@@ -1,4 +1,4 @@
-"""Games, Cardmarket URLs, rising thresholds and runtime settings."""
+"""Cardmarket URLs for Magic: The Gathering, rising thresholds and runtime settings."""
 
 import os
 from dataclasses import dataclass
@@ -8,35 +8,25 @@ from zoneinfo import ZoneInfo
 # Cardmarket (Berlin) dates its files in its own local time: a guide's day and "today" are taken in it.
 CARDMARKET_TZ = ZoneInfo('Europe/Berlin')
 
-PRICE_GUIDE_URL = 'https://downloads.s3.cardmarket.com/productCatalog/priceGuide/price_guide_{id}.json'
-SINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_singles_{id}.json'
-NONSINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_nonsingles_{id}.json'
+# Cardmarket's public files for Magic: The Gathering (its game id is 1).
+PRICE_GUIDE_URL = 'https://downloads.s3.cardmarket.com/productCatalog/priceGuide/price_guide_1.json'
+SINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_singles_1.json'
+NONSINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_nonsingles_1.json'
 
-
-@dataclass(frozen=True)
-class Game:
-    key: str
-    cardmarket_id: int
-    label: str
-    foil_suffix: str
-
-
-GAMES = (
-    Game('magic', 1, 'Magic: The Gathering', '-foil'),
-    Game('pokemon', 6, 'Pokémon', '-holo'),
-    Game('onepiece', 18, 'One Piece', '-foil'),
-    Game('riftbound', 22, 'Riftbound', '-foil'),
+# MTGJSON keeps the last 90 days of Cardmarket's price guide trend; its identifiers map cards to idProduct.
+MTGJSON_PRICES_URL = 'https://mtgjson.com/api/v5/AllPrices.json.xz'
+MTGJSON_IDENTIFIER_URLS = (
+    'https://mtgjson.com/api/v5/csv/cardIdentifiers.csv.gz',
+    'https://mtgjson.com/api/v5/csv/tokenIdentifiers.csv.gz',
 )
 
 
-def game(key):
-    return next(g for g in GAMES if g.key == key)
-
-
-# Rising measures: a card is measured when priced >= MEASURE_MIN_PRICE; the other values are the
+# Rising measures: a card is measured when priced >= MEASURE_MIN_PRICE and its window starts at
+# >= MIN_START_PRICE (a new card's first prices of a few cents are not a rise); the other values are the
 # default thresholds the Rising dashboard applies.
 RISING = {
     'MEASURE_MIN_PRICE': '1.00',
+    'MIN_START_PRICE': '1.00',
     'MIN_PRICE': '5.00',
     'WINDOWS': [14, 28, 56],
     'MIN_GAIN': 0.15,
@@ -47,7 +37,7 @@ RISING = {
     'MAX_JUMP_SHARE': 0.5,
 }
 
-# A sync tries each game at most ATTEMPTS times, RETRY_SECONDS apart.
+# A sync tries at most ATTEMPTS times, RETRY_SECONDS apart.
 ATTEMPTS = 4
 RETRY_SECONDS = 900
 

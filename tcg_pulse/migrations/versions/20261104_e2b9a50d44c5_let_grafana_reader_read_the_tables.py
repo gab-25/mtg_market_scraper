@@ -7,9 +7,9 @@ it read every table of the schema, including the tables later migrations will ad
 Roles are server-wide: the downgrade takes the grants back but never drops the role, and changing the
 password of an existing role is left to an administrator.
 
-Revision ID: 32f5b8e26028
-Revises: 0712cb3b16c3
-Create Date: 2026-11-01 12:52:10.000000
+Revision ID: e2b9a50d44c5
+Revises: cd210b7fd8f7
+Create Date: 2026-11-04 10:01:00.000000
 """
 
 import logging
@@ -18,8 +18,8 @@ import os
 from alembic import op
 from psycopg import sql
 
-revision = '32f5b8e26028'
-down_revision = '0712cb3b16c3'
+revision = 'e2b9a50d44c5'
+down_revision = 'cd210b7fd8f7'
 branch_labels = None
 depends_on = None
 

@@ -91,13 +91,13 @@ def parse_products(products):
     ]
 
 
-def parse_prices(guide, game, single_ids):
-    """Price rows for the singles in the guide; the game's foil/holo keys go to the *_foil fields."""
+def parse_prices(guide, single_ids):
+    """Price rows for the singles in the guide; the -foil keys go to the *_foil fields."""
     rows = []
     for entry in guide['priceGuides']:
         if entry['idProduct'] not in single_ids:
             continue
         values = {k: to_decimal(entry.get(k)) for k in PRICE_KEYS}
-        values |= {f'{k}_foil': to_decimal(entry.get(k + game.foil_suffix)) for k in PRICE_KEYS}
+        values |= {f'{k}_foil': to_decimal(entry.get(k + '-foil')) for k in PRICE_KEYS}
         rows.append(PriceRow(id_product=entry['idProduct'], **values))
     return rows

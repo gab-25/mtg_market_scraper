@@ -6,7 +6,6 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 
 from conftest import sql
-from tcg_pulse.config import GAMES, game
 from tcg_pulse.db import migrate
 from tcg_pulse.models import Base
 
@@ -27,15 +26,10 @@ def test_price_is_hypertable(session):
 
 
 def test_migrate_is_idempotent(session):
-    sql(session, "INSERT INTO card (game, id_product, name) VALUES ('magic', 1, 'Island')")
+    sql(session, "INSERT INTO card (id_product, name) VALUES (1, 'Island')")
     session.commit()
     migrate(session)
     assert sql(session, 'SELECT name FROM card').fetchall() == [('Island',)]
-
-
-def test_games_registry():
-    assert [g.cardmarket_id for g in GAMES] == [1, 6, 18, 22]
-    assert game('pokemon').foil_suffix == '-holo'
 
 
 def test_models_match_migrations(session):
@@ -88,6 +82,7 @@ def test_downgrade_takes_the_grants_back(session):
     from tcg_pulse.db import alembic_config
     config = alembic_config()
     config.attributes['connection'] = session.connection()
-    command.downgrade(config, '0712cb3b16c3')
+    command.downgrade(config, 'cd210b7fd8f7')
     assert not can_select(session, 'price')
     assert sql(session, "SELECT count(*) FROM pg_roles WHERE rolname = 'grafana_reader'").scalar() == 1
+

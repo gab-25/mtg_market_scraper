@@ -6,7 +6,7 @@ import pytest
 
 from tcg_pulse import cardmarket
 from tcg_pulse.cardmarket import guide_date, parse_prices, parse_products
-from tcg_pulse.config import CARDMARKET_TZ, game
+from tcg_pulse.config import CARDMARKET_TZ
 
 
 def guide(*entries, created='2026-11-01T02:47:00+0100'):
@@ -18,32 +18,28 @@ def test_guide_date_converts_to_berlin():
     assert guide_date(guide(created='2026-10-31T23:30:00+0000')) == date(2026, 11, 1)
 
 
-def test_parse_prices_maps_holo_to_foil():
-    rows = parse_prices(guide({'idProduct': 5, 'trend': 1.1, 'trend-holo': 3.93, 'low-holo': None}), game('pokemon'), {5})
-    assert rows[0].trend == Decimal('1.1')
-    assert rows[0].trend_foil == Decimal('3.93')
+def test_parse_prices_reads_foil_suffix():
+    rows = parse_prices(guide({'idProduct': 1, 'trend': 0.07, 'trend-foil': 0.38, 'low-foil': None}), {1})
+    assert rows[0].trend == Decimal('0.07')
+    assert rows[0].trend_foil == Decimal('0.38')
     assert rows[0].low_foil is None
 
 
-def test_parse_prices_reads_foil_suffix_for_magic():
-    rows = parse_prices(guide({'idProduct': 1, 'trend': 0.07, 'trend-foil': 0.38}), game('magic'), {1})
-    assert rows[0].trend_foil == Decimal('0.38')
-
-
 def test_parse_prices_skips_products_not_in_singles():
-    rows = parse_prices(guide({'idProduct': 5, 'trend': 1}, {'idProduct': 6, 'trend': 2}), game('magic'), {5})
+    rows = parse_prices(guide({'idProduct': 5, 'trend': 1}, {'idProduct': 6, 'trend': 2}), {5})
     assert [r.id_product for r in rows] == [5]
 
 
 def test_parse_products():
     cards = parse_products({'products': [
-        {'idProduct': 690368, 'name': 'Roronoa Zoro (OP01-001)', 'idCategory': 1621, 'idExpansion': 5229,
+        {'idProduct': 690368, 'name': 'Sheoldred, the Apocalypse', 'idCategory': 1, 'idExpansion': 5229,
          'idMetacard': 415369, 'dateAdded': '2022-12-28 22:11:43'},
         {'idProduct': 7, 'name': 'Bare'},
     ]})
-    zoro, bare = cards
-    assert (zoro.id_product, zoro.name, zoro.id_expansion, zoro.id_metacard) == (690368, 'Roronoa Zoro (OP01-001)', 5229, 415369)
-    assert zoro.date_added.tzinfo == CARDMARKET_TZ and zoro.date_added.hour == 22
+    sheoldred, bare = cards
+    assert (sheoldred.id_product, sheoldred.name, sheoldred.id_expansion, sheoldred.id_metacard) == (
+        690368, 'Sheoldred, the Apocalypse', 5229, 415369)
+    assert sheoldred.date_added.tzinfo == CARDMARKET_TZ and sheoldred.date_added.hour == 22
     assert bare.id_expansion is None and bare.date_added is None
 
 
@@ -69,5 +65,5 @@ def test_fetch_json_retries_5xx_not_4xx(monkeypatch):
 
 
 def test_parse_products_treats_zero_date_as_missing():
-    [card] = parse_products({'products': [{'idProduct': 1, 'name': 'Weedle', 'dateAdded': '0000-00-00 00:00:00'}]})
+    [card] = parse_products({'products': [{'idProduct': 1, 'name': 'Island', 'dateAdded': '0000-00-00 00:00:00'}]})
     assert card.date_added is None

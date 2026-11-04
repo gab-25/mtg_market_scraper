@@ -11,56 +11,47 @@ def sealed(*items):
     ]}
 
 
-def test_riftbound_names():
+def test_names_from_boosters():
     names = derive_names(sealed(
-        (6286, 'Origins Booster Box', 'Riftbound Display'),
-        (6286, 'Origins Booster', 'Riftbound Booster'),
-        (6286, 'Jinx Champion Deck', 'Riftbound Champion Decks'),
-        (6587, 'Vendetta: Pre-Rift Event Kit', 'Riftbound Riftbound Box Sets'),
-        (6587, 'Vendetta Vault', 'Riftbound Riftbound Box Sets'),
-        (6587, 'Vendetta Sleeved Booster', 'Riftbound Booster'),
+        (5800, 'Bloomburrow Play Booster Box', 'Magic Display'),
+        (5800, 'Bloomburrow Play Booster', 'Magic Booster'),
+        (5800, 'Bloomburrow Commander Deck', 'Magic Preconstructed Decks'),
+        (5900, 'Foundations Prerelease Pack', 'Magic Prerelease'),
+        (5900, 'Foundations Collector Booster', 'Magic Booster'),
     ))
-    assert names == {6286: 'Origins', 6587: 'Vendetta'}
+    assert names == {5800: 'Bloomburrow', 5900: 'Foundations'}
 
 
 def test_booster_box_case_with_parenthetical():
     names = derive_names(sealed(
-        (6399, 'Spiritforged Case (6x Booster Box)', 'Riftbound Display'),
-        (6399, 'Spiritforged Booster', 'Riftbound Booster'),
+        (5800, 'Bloomburrow Case (6x Play Booster Box)', 'Magic Display'),
+        (5800, 'Bloomburrow Play Booster', 'Magic Booster'),
     ))
-    assert names == {6399: 'Spiritforged'}
+    assert names == {5800: 'Bloomburrow'}
 
 
 def test_falls_back_to_other_categories():
-    assert derive_names(sealed((1, 'Unleashed: Pre-Rift Event Kit', 'Riftbound Box Sets'))) == {1: 'Unleashed'}
+    assert derive_names(sealed((1, 'Foundations Prerelease Pack', 'Magic Prerelease'))) == {1: 'Foundations'}
 
 
 def test_expansion_without_products_absent():
-    assert 999 not in derive_names(sealed((1, 'Origins Booster', 'Riftbound Booster')))
+    assert 999 not in derive_names(sealed((1, 'Bloomburrow Play Booster', 'Magic Booster')))
 
 
 def test_overrides_win_and_unnamed_stays_null(session, monkeypatch):
-    monkeypatch.setattr(expansions, 'load_overrides', lambda game: {6286: 'Origins (Fixed)'})
-    sql(session, "INSERT INTO expansion (game, id_expansion) VALUES ('riftbound', 6286), ('riftbound', 42)")
-    count = refresh_expansions(session, 'riftbound', sealed(
-        (6286, 'Origins Booster', 'Riftbound Booster'),
-        (6399, 'Spiritforged Booster', 'Riftbound Booster'),
+    monkeypatch.setattr(expansions, 'load_overrides', lambda: {5800: 'Bloomburrow (Fixed)'})
+    sql(session, "INSERT INTO expansion (id_expansion) VALUES (5800), (42)")
+    count = refresh_expansions(session, sealed(
+        (5800, 'Bloomburrow Play Booster', 'Magic Booster'),
+        (5900, 'Foundations Play Booster', 'Magic Booster'),
     ))
-    rows = dict(sql(session, "SELECT id_expansion, name FROM expansion WHERE game = 'riftbound'").fetchall())
-    assert rows == {6286: 'Origins (Fixed)', 6399: 'Spiritforged', 42: None}
+    rows = dict(sql(session, "SELECT id_expansion, name FROM expansion").fetchall())
+    assert rows == {5800: 'Bloomburrow (Fixed)', 5900: 'Foundations', 42: None}
     assert count == 2
 
 
 def test_load_overrides_reads_repo_file():
-    assert isinstance(expansions.load_overrides('magic'), dict)
-
-
-def test_generic_prefix_keeps_the_part_after_colon():
-    names = derive_names(sealed(
-        (6150, 'Starter Deck: Blue Buggy', 'One Piece Preconstructed Decks'),
-        (6150, 'Starter Deck: Blue Buggy Deck Pack', 'One Piece Preconstructed Decks'),
-    ))
-    assert names == {6150: 'Starter Deck: Blue Buggy'}
+    assert isinstance(expansions.load_overrides(), dict)
 
 
 def test_names_after_colon_are_kept():
@@ -69,19 +60,20 @@ def test_names_after_colon_are_kept():
         (1, 'Innistrad: Crimson Vow Set Booster', 'Magic Booster'),
         (2, 'Innistrad: Midnight Hunt Draft Booster', 'Magic Booster'),
         (3, 'From the Vault: Dragons', 'MtG Set'),
-        (4, 'Booster Box Case (6x Origins Booster Box)', 'Riftbound Display'),
+        (4, 'Challenger Deck 2022: Gruul Stompy', 'Magic Preconstructed Decks'),
     ))
     assert names[1] == 'Innistrad: Crimson Vow'
     assert names[2] == 'Innistrad: Midnight Hunt'
     assert names[3] == 'From the Vault: Dragons'
+    assert names[4] == 'Challenger Deck 2022: Gruul Stompy'
 
 
 def test_edition_markers_in_parentheses_are_kept():
     names = derive_names(sealed(
-        (5229, 'Romance Dawn Booster Box Case (12x Booster Box)', 'One Piece Booster Boxes'),
-        (5229, 'Romance Dawn Booster', 'One Piece Booster'),
-        (5484, 'Romance Dawn Booster Box Case (12x Booster Box) (Non-English)', 'One Piece Booster Boxes'),
-        (5484, 'Romance Dawn Booster (Non-English)', 'One Piece Booster'),
-        (5624, 'Romance Dawn Sleeved Booster (Pre-Errata)', 'One Piece Booster'),
+        (10, 'Dominaria Booster Box Case (6x Booster Box)', 'Magic Display'),
+        (10, 'Dominaria Booster', 'Magic Booster'),
+        (11, 'Dominaria Booster Box Case (6x Booster Box) (Non-English)', 'Magic Display'),
+        (11, 'Dominaria Booster (Non-English)', 'Magic Booster'),
+        (12, 'Dominaria Draft Booster (Pre-Errata)', 'Magic Booster'),
     ))
-    assert names == {5229: 'Romance Dawn', 5484: 'Romance Dawn (Non-English)', 5624: 'Romance Dawn (Pre-Errata)'}
+    assert names == {10: 'Dominaria', 11: 'Dominaria (Non-English)', 12: 'Dominaria (Pre-Errata)'}

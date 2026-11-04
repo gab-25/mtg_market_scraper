@@ -1,5 +1,7 @@
+import gzip
+
 from mtg_market_scraper import expansions
-from mtg_market_scraper.expansions import derive_names, refresh_expansions
+from mtg_market_scraper.expansions import derive_names, mtgjson_names, read_sets, refresh_expansions
 from conftest import sql
 
 
@@ -44,7 +46,7 @@ def test_overrides_win_and_unnamed_stays_null(session, monkeypatch):
     count = refresh_expansions(session, sealed(
         (5800, 'Bloomburrow Play Booster', 'Magic Booster'),
         (5900, 'Foundations Play Booster', 'Magic Booster'),
-    ))
+    ), [])
     rows = dict(sql(session, "SELECT id_expansion, name FROM expansion").fetchall())
     assert rows == {5800: 'Bloomburrow (Fixed)', 5900: 'Foundations', 42: None}
     assert count == 2
@@ -77,3 +79,35 @@ def test_edition_markers_in_parentheses_are_kept():
         (12, 'Dominaria Draft Booster (Pre-Errata)', 'Magic Booster'),
     ))
     assert names == {10: 'Dominaria', 11: 'Dominaria (Non-English)', 12: 'Dominaria (Pre-Errata)'}
+
+
+def mtgjson_set(mcm_id, name, extras=''):
+    return {'mcmId': str(mcm_id), 'mcmIdExtras': str(extras), 'mcmName': name}
+
+
+def test_read_sets_keeps_the_cardmarket_columns():
+    raw = gzip.compress(
+        b'code,name,mcmId,mcmName,mcmIdExtras\n'
+        b'BLB,Bloomburrow,5658,Bloomburrow,5659\n'
+        b'PBLB,Bloomburrow Promos,,,\n')
+    assert read_sets(raw) == [mtgjson_set(5658, 'Bloomburrow', 5659), mtgjson_set('', '')]
+
+
+def test_mtgjson_names_include_the_extras_expansion():
+    names = mtgjson_names([
+        mtgjson_set(5658, 'Bloomburrow', 5659),
+        mtgjson_set(74, 'Tenth Edition'),
+        mtgjson_set('', ''),
+    ])
+    assert names == {5658: 'Bloomburrow', 5659: 'Bloomburrow: Extras', 74: 'Tenth Edition'}
+
+
+def test_mtgjson_beats_derived_and_overrides_beat_mtgjson(session, monkeypatch):
+    monkeypatch.setattr(expansions, 'load_overrides', lambda: {3: 'Hand-fixed'})
+    refresh_expansions(
+        session,
+        sealed((1, 'Bloomburrow Play Booster', 'Magic Booster'), (2, 'Foundations Play Booster', 'Magic Booster')),
+        [mtgjson_set(1, 'Bloomburrow (MTGJSON)'), mtgjson_set(3, 'Promos')],
+    )
+    rows = dict(sql(session, "SELECT id_expansion, name FROM expansion").fetchall())
+    assert rows == {1: 'Bloomburrow (MTGJSON)', 2: 'Foundations', 3: 'Hand-fixed'}

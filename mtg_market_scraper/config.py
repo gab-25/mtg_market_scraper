@@ -19,6 +19,8 @@ MTGJSON_IDENTIFIER_URLS = (
     'https://mtgjson.com/api/v5/csv/cardIdentifiers.csv.gz',
     'https://mtgjson.com/api/v5/csv/tokenIdentifiers.csv.gz',
 )
+# MTGJSON's sets carry Cardmarket's expansion id and name (mcmId, mcmName, and mcmIdExtras for "<set>: Extras").
+MTGJSON_SETS_URL = 'https://mtgjson.com/api/v5/csv/sets.csv.gz'
 
 
 # Rising measures: a card is measured when priced >= MEASURE_MIN_PRICE and its window starts at

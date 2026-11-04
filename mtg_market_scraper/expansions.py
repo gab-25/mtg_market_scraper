@@ -1,10 +1,15 @@
-"""Expansion names, derived from the names of Cardmarket's sealed products.
+"""Expansion names, from MTGJSON's sets and from the names of Cardmarket's sealed products.
 
-Cardmarket's singles list carries only an expansion id. Sealed products of the same expansion are
-named after it ("Bloomburrow Play Booster Box", "Foundations Prerelease Pack"), so stripping the product
-part gives the expansion name. expansion_overrides.json corrects names by hand and always wins.
+Cardmarket's singles list carries only an expansion id. MTGJSON's sets give Cardmarket's own name for
+most real sets (mcmId -> mcmName, and mcmIdExtras -> "<name>: Extras"). For the rest (promos, Secret
+Lair, ...), sealed products of the same expansion are named after it ("Bloomburrow Play Booster Box",
+"Foundations Prerelease Pack"), so stripping the product part gives a name. Precedence: overrides
+(expansion_overrides.json, by hand) over MTGJSON over the sealed products.
 """
 
+import csv
+import gzip
+import io
 import json
 import re
 from collections import Counter, defaultdict
@@ -12,6 +17,8 @@ from importlib.resources import files
 
 from sqlalchemy.dialects.postgresql import insert
 
+from .cardmarket import fetch_bytes
+from .config import MTGJSON_SETS_URL
 from .models import Expansion
 
 # Trailing words that name the product, not the expansion ("Draft Booster Box", "Prerelease Pack").
@@ -62,14 +69,39 @@ def derive_names(nonsingles):
     return names
 
 
+SET_COLUMNS = ('mcmId', 'mcmIdExtras', 'mcmName')
+
+
+def read_sets(raw):
+    """MTGJSON's gzipped sets CSV -> one {mcmId, mcmIdExtras, mcmName} dict per set (strings, maybe empty)."""
+    rows = csv.DictReader(io.StringIO(gzip.decompress(raw).decode()))
+    return [{col: row.get(col) or '' for col in SET_COLUMNS} for row in rows]
+
+
+def fetch_sets():
+    return read_sets(fetch_bytes(MTGJSON_SETS_URL))
+
+
+def mtgjson_names(sets):
+    """Map idExpansion -> Cardmarket's name, for the sets MTGJSON links to Cardmarket."""
+    names = {}
+    for s in sets:
+        if not (s['mcmId'] and s['mcmName']):
+            continue
+        names[int(s['mcmId'])] = s['mcmName']
+        if s['mcmIdExtras']:
+            names[int(s['mcmIdExtras'])] = f"{s['mcmName']}: Extras"
+    return names
+
+
 def load_overrides():
     data = json.loads((files('mtg_market_scraper') / 'expansion_overrides.json').read_text())
     return {int(k): v for k, v in data.items()}
 
 
-def refresh_expansions(session, nonsingles):
-    """Store derived names (overrides win) for the expansions; returns how many were named."""
-    names = derive_names(nonsingles) | load_overrides()
+def refresh_expansions(session, nonsingles, sets):
+    """Store the names (overrides, then MTGJSON, then sealed products); returns how many were named."""
+    names = derive_names(nonsingles) | mtgjson_names(sets) | load_overrides()
     if names:
         stmt = insert(Expansion)
         session.execute(

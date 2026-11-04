@@ -66,6 +66,13 @@ class FakeMtgjson:
         return self.sets
 
 
+@pytest.fixture(autouse=True)
+def no_overrides(monkeypatch):
+    """The repo's expansion_overrides.json would add its own names to every sync."""
+    from mtg_market_scraper import expansions
+    monkeypatch.setattr(expansions, 'load_overrides', dict)
+
+
 @pytest.fixture
 def mtgjson():
     return FakeMtgjson()

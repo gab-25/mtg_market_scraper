@@ -1,4 +1,4 @@
-"""Games, Cardmarket URLs, rising thresholds and runtime settings."""
+"""Cardmarket URLs for Magic: The Gathering, rising thresholds and runtime settings."""
 
 import os
 from dataclasses import dataclass
@@ -8,29 +8,10 @@ from zoneinfo import ZoneInfo
 # Cardmarket (Berlin) dates its files in its own local time: a guide's day and "today" are taken in it.
 CARDMARKET_TZ = ZoneInfo('Europe/Berlin')
 
-PRICE_GUIDE_URL = 'https://downloads.s3.cardmarket.com/productCatalog/priceGuide/price_guide_{id}.json'
-SINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_singles_{id}.json'
-NONSINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_nonsingles_{id}.json'
-
-
-@dataclass(frozen=True)
-class Game:
-    key: str
-    cardmarket_id: int
-    label: str
-    foil_suffix: str
-
-
-GAMES = (
-    Game('magic', 1, 'Magic: The Gathering', '-foil'),
-    Game('pokemon', 6, 'Pokémon', '-holo'),
-    Game('onepiece', 18, 'One Piece', '-foil'),
-    Game('riftbound', 22, 'Riftbound', '-foil'),
-)
-
-
-def game(key):
-    return next(g for g in GAMES if g.key == key)
+# Cardmarket's public files for Magic: The Gathering (its game id is 1).
+PRICE_GUIDE_URL = 'https://downloads.s3.cardmarket.com/productCatalog/priceGuide/price_guide_1.json'
+SINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_singles_1.json'
+NONSINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_nonsingles_1.json'
 
 
 # Rising measures: a card is measured when priced >= MEASURE_MIN_PRICE; the other values are the
@@ -47,7 +28,7 @@ RISING = {
     'MAX_JUMP_SHARE': 0.5,
 }
 
-# A sync tries each game at most ATTEMPTS times, RETRY_SECONDS apart.
+# A sync tries at most ATTEMPTS times, RETRY_SECONDS apart.
 ATTEMPTS = 4
 RETRY_SECONDS = 900
 

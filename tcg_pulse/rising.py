@@ -100,14 +100,14 @@ def evaluate(series, as_of, window_days):
     return metrics if metrics and passes(metrics, RISING) else None
 
 
-def card_series(session, game, as_of, field, days):
-    """Yield (id_product, {day: price}) for the game's cards priced above the measure floor on as_of."""
+def card_series(session, as_of, field, days):
+    """Yield (id_product, {day: price}) for the cards priced above the measure floor on as_of."""
     column = getattr(Price, field)
     floor = Decimal(RISING['MEASURE_MIN_PRICE'])
-    candidates = select(Price.id_product).where(Price.game == game, Price.day == as_of, column >= floor)
+    candidates = select(Price.id_product).where(Price.day == as_of, column >= floor)
     query = (
         select(Price.id_product, Price.day, column)
-        .where(Price.game == game, Price.day.between(as_of - timedelta(days=days - 1), as_of),
+        .where(Price.day.between(as_of - timedelta(days=days - 1), as_of),
                Price.id_product.in_(candidates))
         .order_by(Price.id_product, Price.day)
         .execution_options(yield_per=20000)
@@ -123,18 +123,18 @@ def card_series(session, game, as_of, field, days):
         yield current, series
 
 
-def compute_rising(session, game, as_of):
-    """Replace the game's stored measures with those for as_of, across all windows, normal and foil."""
+def compute_rising(session, as_of):
+    """Replace the stored measures with those for as_of, across all windows, normal and foil."""
     windows = RISING['WINDOWS']
     rows = []
     for foil in (False, True):
-        for id_product, series in card_series(session, game, as_of, 'trend_foil' if foil else 'trend', max(windows)):
+        for id_product, series in card_series(session, as_of, 'trend_foil' if foil else 'trend', max(windows)):
             for window in windows:
                 metrics = measure(series, as_of, window)
                 if metrics:
-                    rows.append({'game': game, 'id_product': id_product, 'window_days': window, 'foil': foil,
+                    rows.append({'id_product': id_product, 'window_days': window, 'foil': foil,
                                  'as_of': as_of, **asdict(metrics)})
-    session.execute(delete(Rising).where(Rising.game == game))
+    session.execute(delete(Rising))
     if rows:
         session.execute(insert(Rising), rows)
     session.commit()

@@ -1,4 +1,4 @@
-"""One daily sync: every game's price guide into the database, with retries and a file archive."""
+"""One daily sync: Magic's price guide into the database, with retries and a file archive."""
 
 import gzip
 import json
@@ -11,7 +11,7 @@ from pathlib import Path
 from sqlalchemy import func, select, text
 
 from .cardmarket import fetch_json, guide_date, parse_prices, parse_products
-from .config import ATTEMPTS, GAMES, NONSINGLES_URL, PRICE_GUIDE_URL, RETRY_SECONDS, SINGLES_URL
+from .config import ATTEMPTS, NONSINGLES_URL, PRICE_GUIDE_URL, RETRY_SECONDS, SINGLES_URL
 from .expansions import refresh_expansions
 from .rising import compute_rising
 from .models import Price
@@ -26,105 +26,100 @@ class GuideNotReady(Exception):
 
 @dataclass
 class ImportResult:
-    game: str
     day: date
     cards: int
     prices: int
 
 
-def archive_path(data_dir, game, day, kind):
-    return Path(data_dir) / game / f'{day:%Y-%m-%d}' / f'{kind}.json.gz'
+def archive_path(data_dir, day, kind):
+    return Path(data_dir) / f'{day:%Y-%m-%d}' / f'{kind}.json.gz'
 
 
-def archive(data_dir, game, day, kind, payload):
-    path = archive_path(data_dir, game, day, kind)
+def archive(data_dir, day, kind, payload):
+    path = archive_path(data_dir, day, kind)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(gzip.compress(json.dumps(payload).encode()))
     return path
 
 
-def read_archive(data_dir, game, day, kind):
-    return json.loads(gzip.decompress(archive_path(data_dir, game, day, kind).read_bytes()))
+def read_archive(data_dir, day, kind):
+    return json.loads(gzip.decompress(archive_path(data_dir, day, kind).read_bytes()))
 
 
-def store(session, game, guide, products, replace=False, update_cards=True):
+def store(session, guide, products, replace=False, update_cards=True):
     """Write one day's cards and prices in a single transaction; replace drops that day's prices first."""
     day = guide_date(guide)
     cards = parse_products(products)
-    prices = parse_prices(guide, game, {c.id_product for c in cards})
-    upsert_cards(session, game.key, cards, update=update_cards)
+    prices = parse_prices(guide, {c.id_product for c in cards})
+    upsert_cards(session, cards, update=update_cards)
     if replace:
-        delete_prices(session, game.key, day)
-    inserted = insert_prices(session, game.key, day, prices)
+        delete_prices(session, day)
+    inserted = insert_prices(session, day, prices)
     session.commit()
     # Fresh statistics: without them the rising query that follows can pick a plan that never ends.
     session.execute(text('ANALYZE price'))
     session.commit()
-    return ImportResult(game=game.key, day=day, cards=len(cards), prices=inserted)
+    return ImportResult(day=day, cards=len(cards), prices=inserted)
 
 
-def refresh_names(session, game, day, data_dir, load):
+def refresh_names(session, day, data_dir, load):
     """Best effort: a failure is logged and never fails the import."""
     try:
         nonsingles = load()
-        archive(data_dir, game.key, day, 'products_nonsingles', nonsingles)
-        refresh_expansions(session, game.key, nonsingles)
+        archive(data_dir, day, 'products_nonsingles', nonsingles)
+        refresh_expansions(session, nonsingles)
     except Exception:
         session.rollback()
-        logger.exception('Refreshing expansion names for %s failed', game.key)
+        logger.exception('Refreshing expansion names failed')
 
 
-def import_game(session, game, today, data_dir, fetch=fetch_json):
-    guide = fetch(PRICE_GUIDE_URL.format(id=game.cardmarket_id))
+def import_day(session, today, data_dir, fetch=fetch_json):
+    guide = fetch(PRICE_GUIDE_URL)
     if guide_date(guide) != today:
-        raise GuideNotReady(f'{game.key}: price guide is dated {guide_date(guide)}, expected {today}')
-    products = fetch(SINGLES_URL.format(id=game.cardmarket_id))
-    archive(data_dir, game.key, today, 'price_guide', guide)
-    archive(data_dir, game.key, today, 'products_singles', products)
-    result = store(session, game, guide, products)
-    compute_rising(session, game.key, today)
-    refresh_names(session, game, today, data_dir, lambda: fetch(NONSINGLES_URL.format(id=game.cardmarket_id)))
+        raise GuideNotReady(f'price guide is dated {guide_date(guide)}, expected {today}')
+    products = fetch(SINGLES_URL)
+    archive(data_dir, today, 'price_guide', guide)
+    archive(data_dir, today, 'products_singles', products)
+    result = store(session, guide, products)
+    compute_rising(session, today)
+    refresh_names(session, today, data_dir, lambda: fetch(NONSINGLES_URL))
     return result
 
 
-def sync_all(session, today, data_dir, games=GAMES, fetch=fetch_json, sleep=time.sleep):
-    """Import today's prices for every game not fully imported yet. True when all games are done."""
-    pending = [g for g in games if not imported(session, g.key, today)]
+def sync(session, today, data_dir, fetch=fetch_json, sleep=time.sleep):
+    """Import today's prices unless already fully imported. True when today is done."""
+    done = imported(session, today)
     session.commit()
+    if done:
+        return True
     for attempt in range(1, ATTEMPTS + 1):
-        failed = []
-        for game in pending:
-            started = datetime.now(timezone.utc)
-            try:
-                result = import_game(session, game, today, data_dir, fetch)
-            except Exception as exc:
-                session.rollback()
-                logger.warning('%s: attempt %d/%d failed: %s', game.key, attempt, ATTEMPTS, exc)
-                log_run(session, game.key, attempt, started, 'failed', error=f'{type(exc).__name__}: {exc}')
-                failed.append(game)
-            else:
-                logger.info('%s: %d cards, %d prices for %s', game.key, result.cards, result.prices, result.day)
-                log_run(session, game.key, attempt, started, 'ok', guide_date=result.day, cards=result.cards,
-                        prices=result.prices)
-        pending = failed
-        if not pending:
+        started = datetime.now(timezone.utc)
+        try:
+            result = import_day(session, today, data_dir, fetch)
+        except Exception as exc:
+            session.rollback()
+            logger.warning('Attempt %d/%d failed: %s', attempt, ATTEMPTS, exc)
+            log_run(session, attempt, started, 'failed', error=f'{type(exc).__name__}: {exc}')
+        else:
+            logger.info('%d cards, %d prices for %s', result.cards, result.prices, result.day)
+            log_run(session, attempt, started, 'ok', guide_date=result.day, cards=result.cards, prices=result.prices)
             return True
         if attempt < ATTEMPTS:
             sleep(RETRY_SECONDS)
-    logger.error('Giving up on %s', ', '.join(g.key for g in pending))
+    logger.error('Giving up on %s', today)
     return False
 
 
-def reimport(session, game, day, data_dir):
+def reimport(session, day, data_dir):
     """Import an archived day again, replacing that day's prices, without downloading anything.
 
     Card names are only updated, and rising only recomputed, when the day is the latest one stored."""
-    latest = session.scalar(select(func.max(Price.day)).where(Price.game == game.key))
+    latest = session.scalar(select(func.max(Price.day)))
     is_latest = latest is None or day >= latest
-    result = store(session, game, read_archive(data_dir, game.key, day, 'price_guide'),
-                   read_archive(data_dir, game.key, day, 'products_singles'), replace=True, update_cards=is_latest)
+    result = store(session, read_archive(data_dir, day, 'price_guide'),
+                   read_archive(data_dir, day, 'products_singles'), replace=True, update_cards=is_latest)
     if is_latest:
-        compute_rising(session, game.key, day)
-    if is_latest and archive_path(data_dir, game.key, day, 'products_nonsingles').exists():
-        refresh_names(session, game, day, data_dir, lambda: read_archive(data_dir, game.key, day, 'products_nonsingles'))
+        compute_rising(session, day)
+    if is_latest and archive_path(data_dir, day, 'products_nonsingles').exists():
+        refresh_names(session, day, data_dir, lambda: read_archive(data_dir, day, 'products_nonsingles'))
     return result

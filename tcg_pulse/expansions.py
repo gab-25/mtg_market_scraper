@@ -1,7 +1,7 @@
 """Expansion names, derived from the names of Cardmarket's sealed products.
 
 Cardmarket's singles list carries only an expansion id. Sealed products of the same expansion are
-named after it ("Origins Booster Box", "Vendetta: Pre-Rift Event Kit"), so stripping the product
+named after it ("Bloomburrow Play Booster Box", "Foundations Prerelease Pack"), so stripping the product
 part gives the expansion name. expansion_overrides.json corrects names by hand and always wins.
 """
 
@@ -14,11 +14,11 @@ from sqlalchemy.dialects.postgresql import insert
 
 from .models import Expansion
 
-# Trailing words that name the product, not the expansion ("Draft Booster Box", "Pre-Rift Event Kit").
+# Trailing words that name the product, not the expansion ("Draft Booster Box", "Prerelease Pack").
 PRODUCT_WORDS = {
     'booster', 'boosters', 'box', 'boxes', 'case', 'display', 'draft', 'set', 'collector', 'play',
     'sleeved', 'bundle', 'pack', 'packs', 'dash', 'tin', 'vault', 'deck', 'theme', 'fat', 'kit',
-    'prerelease', 'pre-rift', 'event', 'elite', 'trainer',
+    'prerelease', 'event',
 }
 PARENTHETICAL_RE = re.compile(r'\(([^)]*)\)')
 PACKAGING_RE = re.compile(r'^\d+x\b', re.IGNORECASE)
@@ -33,8 +33,8 @@ def is_packaging(note):
 def candidate(name):
     """Drop the trailing product words and packaging notes, keep edition notes:
     "Innistrad: Crimson Vow Draft Booster Box" -> "Innistrad: Crimson Vow",
-    "Vendetta: Pre-Rift Event Kit" -> "Vendetta",
-    "Romance Dawn Booster (Non-English)" -> "Romance Dawn (Non-English)".
+    "Foundations Prerelease Pack" -> "Foundations",
+    "Dominaria Booster (Non-English)" -> "Dominaria (Non-English)".
     Empty when nothing but product words is left."""
     notes = [n.strip() for n in PARENTHETICAL_RE.findall(name) if not is_packaging(n)]
     words = PARENTHETICAL_RE.sub(' ', name).split()
@@ -62,20 +62,20 @@ def derive_names(nonsingles):
     return names
 
 
-def load_overrides(game):
+def load_overrides():
     data = json.loads((files('tcg_pulse') / 'expansion_overrides.json').read_text())
-    return {int(k): v for k, v in data.get(game, {}).items()}
+    return {int(k): v for k, v in data.items()}
 
 
-def refresh_expansions(session, game, nonsingles):
-    """Store derived names (overrides win) for the game's expansions; returns how many were named."""
-    names = derive_names(nonsingles) | load_overrides(game)
+def refresh_expansions(session, nonsingles):
+    """Store derived names (overrides win) for the expansions; returns how many were named."""
+    names = derive_names(nonsingles) | load_overrides()
     if names:
         stmt = insert(Expansion)
         session.execute(
-            stmt.on_conflict_do_update(index_elements=[Expansion.game, Expansion.id_expansion],
+            stmt.on_conflict_do_update(index_elements=[Expansion.id_expansion],
                                        set_={'name': stmt.excluded.name}),
-            [{'game': game, 'id_expansion': exp, 'name': name} for exp, name in names.items()],
+            [{'id_expansion': exp, 'name': name} for exp, name in names.items()],
         )
     session.commit()
     return len(names)

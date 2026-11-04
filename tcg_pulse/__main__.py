@@ -5,17 +5,16 @@ import logging
 import sys
 from datetime import date, datetime
 
-from .config import CARDMARKET_TZ, GAMES, game, load_settings
+from .config import CARDMARKET_TZ, load_settings
 from .db import connect, migrate
-from .sync import reimport, sync_all
+from .sync import reimport, sync
 
 
 def main(argv=None):
     parser = argparse.ArgumentParser(prog='tcg_pulse')
     commands = parser.add_subparsers(dest='command', required=True)
-    commands.add_parser('sync', help="import today's prices for every game, retrying failures")
+    commands.add_parser('sync', help="import today's Magic prices, retrying failures")
     again = commands.add_parser('reimport', help='import an archived day again')
-    again.add_argument('--game', required=True, choices=[g.key for g in GAMES])
     again.add_argument('--date', required=True, type=date.fromisoformat)
     args = parser.parse_args(argv)
 
@@ -25,10 +24,10 @@ def main(argv=None):
     migrate(session)
 
     if args.command == 'sync':
-        ok = sync_all(session, datetime.now(CARDMARKET_TZ).date(), settings.data_dir)
+        ok = sync(session, datetime.now(CARDMARKET_TZ).date(), settings.data_dir)
         sys.exit(0 if ok else 1)
-    result = reimport(session, game(args.game), args.date, settings.data_dir)
-    logging.info('%s: reimported %d prices for %s', result.game, result.prices, result.day)
+    result = reimport(session, args.date, settings.data_dir)
+    logging.info('Reimported %d prices for %s', result.prices, result.day)
 
 
 if __name__ == '__main__':

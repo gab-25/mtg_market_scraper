@@ -1,7 +1,7 @@
 [project]
 name = "tcg-pulse"
 version = "0.1.0"
-description = "Daily Cardmarket prices for Magic, Pokémon, One Piece and Riftbound, shown in Grafana"
+description = "Daily Cardmarket prices for Magic: The Gathering, shown in Grafana"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [

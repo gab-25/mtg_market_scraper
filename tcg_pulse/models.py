@@ -16,7 +16,6 @@ class Base(DeclarativeBase):
 class Expansion(Base):
     __tablename__ = 'expansion'
 
-    game: Mapped[str] = mapped_column(Text, primary_key=True)
     id_expansion: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     name: Mapped[str | None] = mapped_column(Text)
 
@@ -24,7 +23,6 @@ class Expansion(Base):
 class Card(Base):
     __tablename__ = 'card'
 
-    game: Mapped[str] = mapped_column(Text, primary_key=True)
     id_product: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     name: Mapped[str] = mapped_column(Text)
     id_expansion: Mapped[int | None]
@@ -38,7 +36,6 @@ class Price(Base):
     __tablename__ = 'price'
     __table_args__ = (Index('price_day_idx', text('day DESC')),)
 
-    game: Mapped[str] = mapped_column(Text, primary_key=True)
     id_product: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     day: Mapped[date] = mapped_column(primary_key=True)
     trend: Mapped[Decimal | None] = mapped_column(Money)
@@ -56,11 +53,10 @@ class Price(Base):
 
 
 class Rising(Base):
-    """The latest rising measures of a game's cards; thresholds are applied by the dashboard."""
+    """The latest rising measures of the cards; thresholds are applied by the dashboard."""
 
     __tablename__ = 'rising'
 
-    game: Mapped[str] = mapped_column(Text, primary_key=True)
     id_product: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     window_days: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
     foil: Mapped[bool] = mapped_column(primary_key=True)
@@ -75,16 +71,15 @@ class Rising(Base):
 
 
 class ImportRun(Base):
-    """One attempt at importing one game."""
+    """One attempt at importing a day."""
 
     __tablename__ = 'import_run'
     __table_args__ = (
         CheckConstraint("status IN ('ok', 'failed')", name='import_run_status_check'),
-        Index('import_run_game_started', 'game', 'started_at'),
+        Index('import_run_started', 'started_at'),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
-    game: Mapped[str] = mapped_column(Text)
     attempt: Mapped[int]
     started_at: Mapped[datetime]
     finished_at: Mapped[datetime | None]

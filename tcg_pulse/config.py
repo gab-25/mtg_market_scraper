@@ -21,10 +21,12 @@ MTGJSON_IDENTIFIER_URLS = (
 )
 
 
-# Rising measures: a card is measured when priced >= MEASURE_MIN_PRICE; the other values are the
+# Rising measures: a card is measured when priced >= MEASURE_MIN_PRICE and its window starts at
+# >= MIN_START_PRICE (a new card's first prices of a few cents are not a rise); the other values are the
 # default thresholds the Rising dashboard applies.
 RISING = {
     'MEASURE_MIN_PRICE': '1.00',
+    'MIN_START_PRICE': '1.00',
     'MIN_PRICE': '5.00',
     'WINDOWS': [14, 28, 56],
     'MIN_GAIN': 0.15,

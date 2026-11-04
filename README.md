@@ -10,7 +10,8 @@ Grafana. Magic is the only game: there is no game column or selector anywhere.
   last ~90 days come from [MTGJSON](https://mtgjson.com), which keeps Cardmarket's daily trend (normal
   and foil). Only trend and trend foil are filled on those days.
 - **Rising cards**: after the import, every card priced ≥ 1 € is measured over 14, 28 and 56 days
-  (gain, steadiness R², days with a price, rising quarters, largest single-day jump). The Rising
+  (gain, steadiness R², days with a price, rising quarters, largest single-day jump). A window must
+  also start at ≥ 1 €: a new card's first prices of a few cents are not a rise. The Rising
   dashboard applies the thresholds (defaults: ≥ 5 €, +15 %, no single-day spikes).
 - **Expansion names** are derived from the names of Cardmarket's sealed products ("Bloomburrow Play
   Booster Box" → "Bloomburrow"). Wrong or missing names can be fixed by hand in

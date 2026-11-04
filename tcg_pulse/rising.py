@@ -37,8 +37,8 @@ def linear_fit(xs, ys):
 def measure(series, as_of, window_days):
     """Metrics of the window ending on as_of, or None if the card is not rising at all.
 
-    Only the base requirements are applied here (a price on as_of above the measure floor, a positive
-    gain and slope, every bucket populated and the last one above the first); user thresholds are
+    Only the base requirements are applied here (a price on as_of above the measure floor, a first
+    price in the window above the start floor, a positive gain and slope, every bucket populated and the last one above the first); user thresholds are
     applied afterwards with `passes` or as a database filter. `series` maps date -> price (None when
     missing); dates outside the window are ignored.
     """
@@ -52,6 +52,8 @@ def measure(series, as_of, window_days):
         return None
 
     first, last = points[0][1], points[-1][1]
+    if first < float(rules['MIN_START_PRICE']):
+        return None
     gain = (last - first) / first
     if gain <= 0:
         return None

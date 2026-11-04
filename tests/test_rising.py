@@ -37,6 +37,17 @@ def test_steady_rise_qualifies():
     assert m.price == Decimal("13") and m.slope > 0
 
 
+def test_window_starting_below_the_start_floor_is_not_measured():
+    # A new card at a few cents before release, then its real price: not a rise.
+    series = {**ramp(0.02, 0.02, 28), **ramp(5, 8, 10)}
+    assert measure(series, AS_OF, 28) is None
+
+
+def test_window_starting_at_the_start_floor_is_measured():
+    assert measure(ramp(1.00, 8, 28), AS_OF, 28) is not None
+    assert measure(ramp(0.99, 8, 28), AS_OF, 28) is None
+
+
 def test_price_exactly_five_qualifies():
     assert evaluate(ramp(4, 5, 28), AS_OF, 28) is not None
 

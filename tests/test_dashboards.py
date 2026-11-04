@@ -304,3 +304,9 @@ def test_rising_sparkline_spans_missing_days():
     [cell] = [prop['value'] for o in table['fieldConfig']['overrides'] for prop in o['properties']
               if prop['id'] == 'custom.cellOptions' and prop['value'].get('type') == 'sparkline']
     assert cell['spanNulls'] is True and cell['insertNulls'] is False
+
+
+def test_card_detail_charts_span_missing_days():
+    for p in load('card-detail.json')['panels']:
+        if p['type'] == 'timeseries':
+            assert p['fieldConfig']['defaults']['custom']['spanNulls'] is True, p['title']

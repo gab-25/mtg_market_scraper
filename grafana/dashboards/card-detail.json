@@ -64,6 +64,22 @@
   },
   "panels": [
     {
+      "id": 8,
+      "type": "text",
+      "title": "Card",
+      "description": "The printing's image from Scryfall, found by its Cardmarket id. Third-party tokens, alters and some foreign printings have none.",
+      "gridPos": {
+        "h": 18,
+        "w": 6,
+        "x": 0,
+        "y": 0
+      },
+      "options": {
+        "mode": "html",
+        "content": "<div style=\"display: flex; height: 100%; align-items: center; justify-content: center\"><img src=\"https://api.scryfall.com/cards/cardmarket/${card:percentencode}?format=image&version=normal\" alt=\"No image for this card\" style=\"max-width: 100%; max-height: 100%\"></div>"
+      }
+    },
+    {
       "id": 1,
       "type": "stat",
       "title": "Trend",
@@ -73,8 +89,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 0,
+        "w": 9,
+        "x": 6,
         "y": 0
       },
       "targets": [
@@ -129,8 +145,8 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 6,
+        "w": 9,
+        "x": 15,
         "y": 0
       },
       "targets": [
@@ -185,9 +201,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 12,
-        "y": 0
+        "w": 9,
+        "x": 6,
+        "y": 4
       },
       "targets": [
         {
@@ -253,9 +269,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 6,
-        "x": 18,
-        "y": 0
+        "w": 9,
+        "x": 15,
+        "y": 4
       },
       "targets": [
         {
@@ -321,9 +337,9 @@
       },
       "gridPos": {
         "h": 10,
-        "w": 24,
-        "x": 0,
-        "y": 4
+        "w": 18,
+        "x": 6,
+        "y": 8
       },
       "targets": [
         {
@@ -387,7 +403,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 14
+        "y": 18
       },
       "targets": [
         {
@@ -451,7 +467,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 28
       },
       "targets": [
         {

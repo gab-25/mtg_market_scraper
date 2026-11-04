@@ -17,7 +17,8 @@ Grafana. Magic is the only game: there is no game column or selector anywhere.
   [`tcg_pulse/expansion_overrides.json`](tcg_pulse/expansion_overrides.json) (`{"6381": "Name"}`);
   an expansion with no name shows its id, e.g. `#5229`.
 - **Grafana** with two dashboards, provisioned from [`grafana/`](grafana/): **Rising** (pick the
-  window, normal/foil, thresholds) and **Card detail** (search a card, price history). Login only.
+  window, normal/foil, thresholds) and **Card detail** (search a card, its image from
+  [Scryfall](https://scryfall.com), price history). Login only.
 
 ## Running locally
 

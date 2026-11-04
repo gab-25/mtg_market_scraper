@@ -279,3 +279,20 @@ def test_window_offers_only_the_history_windows():
 
 def test_card_detail_has_no_dashboard_links():
     assert load('card-detail.json')['links'] == []
+
+
+def test_card_detail_shows_the_scryfall_image_of_the_selected_card():
+    dashboard = load('card-detail.json')
+    image = panel(dashboard, 'Card')
+    assert image['type'] == 'text' and image['options']['mode'] == 'html'
+    assert 'https://api.scryfall.com/cards/cardmarket/${card:percentencode}?format=image' in image['options']['content']
+
+
+def test_card_detail_panels_do_not_overlap():
+    cells = set()
+    for p in load('card-detail.json')['panels']:
+        g = p['gridPos']
+        assert g['x'] + g['w'] <= 24, p['title']
+        area = {(x, y) for x in range(g['x'], g['x'] + g['w']) for y in range(g['y'], g['y'] + g['h'])}
+        assert not cells & area, p['title']
+        cells |= area

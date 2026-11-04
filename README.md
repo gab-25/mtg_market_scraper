@@ -13,8 +13,10 @@ Grafana. Magic is the only game: there is no game column or selector anywhere.
   (gain, steadiness R², days with a price, rising quarters, largest single-day jump). A window must
   also start at ≥ 1 €: a new card's first prices of a few cents are not a rise. The Rising
   dashboard applies the thresholds (defaults: ≥ 5 €, +15 %, no single-day spikes).
-- **Expansion names** are derived from the names of Cardmarket's sealed products ("Bloomburrow Play
-  Booster Box" → "Bloomburrow"). Wrong or missing names can be fixed by hand in
+- **Expansion names** come from MTGJSON's sets, which carry Cardmarket's own name and id for most
+  real sets and their ": Extras". The rest (promos, Secret Lair, …) are derived from the names of
+  Cardmarket's sealed products ("Bloomburrow Play Booster Box" → "Bloomburrow"). Wrong or missing
+  names can be fixed by hand in
   [`mtg_market_scraper/expansion_overrides.json`](mtg_market_scraper/expansion_overrides.json) (`{"6381": "Name"}`);
   an expansion with no name shows its id, e.g. `#5229`.
 - **Grafana** with two dashboards, provisioned from [`grafana/`](grafana/): **Rising** (pick the

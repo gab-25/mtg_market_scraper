@@ -51,13 +51,37 @@ def fake():
     return FakeCardmarket()
 
 
+class FakeMtgjson:
+    """Serves MTGJSON's sets, as read_sets returns them; fails when error is set."""
+
+    def __init__(self):
+        self.calls = 0
+        self.error = None
+        self.sets = [{'mcmId': '10', 'mcmIdExtras': '11', 'mcmName': 'Bloomburrow (MTGJSON)'}]
+
+    def __call__(self):
+        self.calls += 1
+        if self.error:
+            raise self.error
+        return self.sets
+
+
+@pytest.fixture
+def mtgjson():
+    return FakeMtgjson()
+
+
 @pytest.fixture
 def sleeps():
     return []
 
 
-def run(session, tmp_path, fake, sleeps):
-    return sync(session, TODAY, tmp_path, fetch=fake, sleep=sleeps.append)
+def run(session, tmp_path, fake, sleeps, mtgjson=None):
+    return sync(session, TODAY, tmp_path, fetch=fake, sleep=sleeps.append, fetch_sets=mtgjson or FakeMtgjson())
+
+
+def names(session):
+    return dict(sql(session, 'SELECT id_expansion, name FROM expansion').fetchall())
 
 
 def runs(session):
@@ -72,11 +96,11 @@ def test_sync_imports_and_archives(session, tmp_path, fake, sleeps):
     assert run(session, tmp_path, fake, sleeps) is True
     assert sleeps == []
     assert sorted(p.name for p in (tmp_path / '2026-11-01').iterdir()) == [
-        'price_guide.json.gz', 'products_nonsingles.json.gz', 'products_singles.json.gz']
+        'mtgjson_sets.json.gz', 'price_guide.json.gz', 'products_nonsingles.json.gz', 'products_singles.json.gz']
     assert runs(session) == [('ok',)]
     assert count_prices(session) == 2
     assert sql(session, 'SELECT trend_foil FROM price WHERE id_product = 1').fetchone()[0] == 3
-    assert sql(session, 'SELECT name FROM expansion').fetchone()[0] == 'Bloomburrow'
+    assert names(session) == {10: 'Bloomburrow (MTGJSON)', 11: 'Bloomburrow (MTGJSON): Extras'}
     archived = json.loads(gzip.decompress((tmp_path / '2026-11-01' / 'price_guide.json.gz').read_bytes()))
     assert archived['createdAt'] == TODAY_STAMP
 
@@ -111,6 +135,33 @@ def test_expansion_failure_does_not_fail_import(session, tmp_path, fake, sleeps)
     assert run(session, tmp_path, fake, sleeps) is True
     assert runs(session) == [('ok',)]
     assert count_prices(session) == 2
+
+
+def test_mtgjson_failure_leaves_names_alone(session, tmp_path, fake, sleeps, mtgjson):
+    sql(session, "INSERT INTO expansion (id_expansion, name) VALUES (10, 'Kept')")
+    session.commit()
+    mtgjson.error = httpx.ConnectError('nope')
+    assert run(session, tmp_path, fake, sleeps, mtgjson) is True
+    assert runs(session) == [('ok',)]
+    assert names(session) == {10: 'Kept'}
+
+
+def test_reimport_names_from_the_archive(session, tmp_path, fake, sleeps, mtgjson):
+    run(session, tmp_path, fake, sleeps, mtgjson)
+    sql(session, 'UPDATE expansion SET name = NULL')
+    session.commit()
+    reimport(session, TODAY, tmp_path)
+    assert mtgjson.calls == 1
+    assert names(session)[10] == 'Bloomburrow (MTGJSON)'
+
+
+def test_reimport_without_archived_sets_leaves_names_alone(session, tmp_path, fake, sleeps):
+    run(session, tmp_path, fake, sleeps)
+    (tmp_path / '2026-11-01' / 'mtgjson_sets.json.gz').unlink()
+    sql(session, "UPDATE expansion SET name = 'Kept'")
+    session.commit()
+    reimport(session, TODAY, tmp_path)
+    assert set(names(session).values()) == {'Kept'}
 
 
 def test_reimport_from_archive(session, tmp_path, fake, sleeps):

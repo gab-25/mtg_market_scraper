@@ -12,7 +12,7 @@ from sqlalchemy import func, select, text
 
 from .cardmarket import fetch_json, guide_date, parse_prices, parse_products
 from .config import ATTEMPTS, NONSINGLES_URL, PRICE_GUIDE_URL, RETRY_SECONDS, SINGLES_URL
-from .expansions import refresh_expansions
+from .expansions import fetch_sets as fetch_mtgjson_sets, refresh_expansions
 from .rising import compute_rising
 from .models import Price
 from .store import delete_prices, imported, insert_prices, log_run, upsert_cards
@@ -62,18 +62,20 @@ def store(session, guide, products, replace=False, update_cards=True):
     return ImportResult(day=day, cards=len(cards), prices=inserted)
 
 
-def refresh_names(session, day, data_dir, load):
-    """Best effort: a failure is logged and never fails the import."""
+def refresh_names(session, day, data_dir, load_nonsingles, load_sets):
+    """Best effort: a failure is logged, leaves the names as they were and never fails the import."""
     try:
-        nonsingles = load()
+        nonsingles = load_nonsingles()
+        sets = load_sets()
         archive(data_dir, day, 'products_nonsingles', nonsingles)
-        refresh_expansions(session, nonsingles)
+        archive(data_dir, day, 'mtgjson_sets', sets)
+        refresh_expansions(session, nonsingles, sets)
     except Exception:
         session.rollback()
         logger.exception('Refreshing expansion names failed')
 
 
-def import_day(session, today, data_dir, fetch=fetch_json):
+def import_day(session, today, data_dir, fetch=fetch_json, fetch_sets=fetch_mtgjson_sets):
     guide = fetch(PRICE_GUIDE_URL)
     if guide_date(guide) != today:
         raise GuideNotReady(f'price guide is dated {guide_date(guide)}, expected {today}')
@@ -82,11 +84,11 @@ def import_day(session, today, data_dir, fetch=fetch_json):
     archive(data_dir, today, 'products_singles', products)
     result = store(session, guide, products)
     compute_rising(session, today)
-    refresh_names(session, today, data_dir, lambda: fetch(NONSINGLES_URL))
+    refresh_names(session, today, data_dir, lambda: fetch(NONSINGLES_URL), fetch_sets)
     return result
 
 
-def sync(session, today, data_dir, fetch=fetch_json, sleep=time.sleep):
+def sync(session, today, data_dir, fetch=fetch_json, sleep=time.sleep, fetch_sets=fetch_mtgjson_sets):
     """Import today's prices unless already fully imported. True when today is done."""
     done = imported(session, today)
     session.commit()
@@ -95,7 +97,7 @@ def sync(session, today, data_dir, fetch=fetch_json, sleep=time.sleep):
     for attempt in range(1, ATTEMPTS + 1):
         started = datetime.now(timezone.utc)
         try:
-            result = import_day(session, today, data_dir, fetch)
+            result = import_day(session, today, data_dir, fetch, fetch_sets)
         except Exception as exc:
             session.rollback()
             logger.warning('Attempt %d/%d failed: %s', attempt, ATTEMPTS, exc)
@@ -120,6 +122,8 @@ def reimport(session, day, data_dir):
                    read_archive(data_dir, day, 'products_singles'), replace=True, update_cards=is_latest)
     if is_latest:
         compute_rising(session, day)
-    if is_latest and archive_path(data_dir, day, 'products_nonsingles').exists():
-        refresh_names(session, day, data_dir, lambda: read_archive(data_dir, day, 'products_nonsingles'))
+    # Days archived before MTGJSON's sets were kept would name expansions from sealed products only.
+    if is_latest and all(archive_path(data_dir, day, kind).exists() for kind in ('products_nonsingles', 'mtgjson_sets')):
+        refresh_names(session, day, data_dir, lambda: read_archive(data_dir, day, 'products_nonsingles'),
+                      lambda: read_archive(data_dir, day, 'mtgjson_sets'))
     return result

@@ -1,5 +1,6 @@
 """Download and parse Cardmarket's public price guides and product lists."""
 
+import json
 import logging
 import time
 from dataclasses import dataclass
@@ -19,20 +20,24 @@ TRANSPORT = None  # replaced in tests
 PRICE_KEYS = ('trend', 'low', 'avg', 'avg1', 'avg7', 'avg30')
 
 
-def fetch_json(url):
-    """GET a JSON file; transport errors and 5xx are retried with backoff, 4xx raise at once."""
+def fetch_bytes(url):
+    """GET a file; transport errors and 5xx are retried with backoff, 4xx raise at once."""
     for attempt in range(FETCH_ATTEMPTS):
         try:
             with httpx.Client(transport=TRANSPORT, timeout=300, follow_redirects=True, headers=HEADERS) as client:
                 response = client.get(url)
                 response.raise_for_status()
-                return response.json()
+                return response.content
         except (httpx.TransportError, httpx.HTTPStatusError) as exc:
             retryable = not isinstance(exc, httpx.HTTPStatusError) or exc.response.status_code >= 500
             if not retryable or attempt == FETCH_ATTEMPTS - 1:
                 raise
             logger.warning('Fetching %s failed (%s), retrying', url, exc)
             time.sleep(5 * 2**attempt)
+
+
+def fetch_json(url):
+    return json.loads(fetch_bytes(url))
 
 
 def guide_date(guide):

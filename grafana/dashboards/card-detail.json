@@ -69,7 +69,7 @@
       "title": "Card",
       "description": "The printing's image from Scryfall, found by its Cardmarket id. Third-party tokens, alters and some foreign printings have none.",
       "gridPos": {
-        "h": 12,
+        "h": 8,
         "w": 6,
         "x": 0,
         "y": 0
@@ -88,7 +88,7 @@
         "uid": "tcg_pulse"
       },
       "gridPos": {
-        "h": 6,
+        "h": 4,
         "w": 9,
         "x": 6,
         "y": 0
@@ -144,7 +144,7 @@
         "uid": "tcg_pulse"
       },
       "gridPos": {
-        "h": 6,
+        "h": 4,
         "w": 9,
         "x": 15,
         "y": 0
@@ -200,10 +200,10 @@
         "uid": "tcg_pulse"
       },
       "gridPos": {
-        "h": 6,
+        "h": 4,
         "w": 9,
         "x": 6,
-        "y": 6
+        "y": 4
       },
       "targets": [
         {
@@ -268,10 +268,10 @@
         "uid": "tcg_pulse"
       },
       "gridPos": {
-        "h": 6,
+        "h": 4,
         "w": 9,
         "x": 15,
-        "y": 6
+        "y": 4
       },
       "targets": [
         {
@@ -339,7 +339,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 12
+        "y": 8
       },
       "targets": [
         {
@@ -403,7 +403,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 18
       },
       "targets": [
         {
@@ -467,7 +467,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 28
       },
       "targets": [
         {

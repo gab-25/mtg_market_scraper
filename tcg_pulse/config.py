@@ -13,6 +13,13 @@ PRICE_GUIDE_URL = 'https://downloads.s3.cardmarket.com/productCatalog/priceGuide
 SINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_singles_1.json'
 NONSINGLES_URL = 'https://downloads.s3.cardmarket.com/productCatalog/productList/products_nonsingles_1.json'
 
+# MTGJSON keeps the last 90 days of Cardmarket's price guide trend; its identifiers map cards to idProduct.
+MTGJSON_PRICES_URL = 'https://mtgjson.com/api/v5/AllPrices.json.xz'
+MTGJSON_IDENTIFIER_URLS = (
+    'https://mtgjson.com/api/v5/csv/cardIdentifiers.csv.gz',
+    'https://mtgjson.com/api/v5/csv/tokenIdentifiers.csv.gz',
+)
+
 
 # Rising measures: a card is measured when priced >= MEASURE_MIN_PRICE; the other values are the
 # default thresholds the Rising dashboard applies.

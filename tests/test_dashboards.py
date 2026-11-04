@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from tcg_pulse.cardmarket import CardRow, PriceRow
-from tcg_pulse.store import insert_prices, upsert_cards
+from mtg_market_scraper.cardmarket import CardRow, PriceRow
+from mtg_market_scraper.store import insert_prices, upsert_cards
 from conftest import sql
 
 DASHBOARDS = Path(__file__).parent.parent / 'grafana' / 'dashboards'
@@ -164,17 +164,17 @@ def test_tracked_history_and_last_import(session):
     assert run_panel(session, dashboard, 'Last import', **RISING_DEFAULTS)[1] == [('2026-11-01 04:31 · ok',)]
 
 
-def test_dashboards_use_tcg_pulse_datasource_and_english():
+def test_dashboards_use_mtg_market_scraper_datasource_and_english():
     uids = set()
     for path in DASHBOARDS.glob('*.json'):
         dashboard = json.loads(path.read_text())
         uids.add(dashboard['uid'])
         for p in dashboard['panels']:
             for t in p.get('targets', []):
-                assert t['datasource']['uid'] == 'tcg_pulse', p['title']
+                assert t['datasource']['uid'] == 'mtg_market_scraper', p['title']
         for var in dashboard['templating']['list']:
             if var['type'] == 'query':
-                assert var['datasource']['uid'] == 'tcg_pulse'
+                assert var['datasource']['uid'] == 'mtg_market_scraper'
         text = path.read_text()
         assert 'Gioco' not in text and 'Finestra' not in text
     assert uids == {'rising', 'card-detail'}

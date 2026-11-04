@@ -20,13 +20,13 @@ jobs:
       db:
         image: timescale/timescaledb:2.30.2-pg17
         env:
-          POSTGRES_USER: tcg_pulse
-          POSTGRES_PASSWORD: tcg_pulse
-          POSTGRES_DB: tcg_pulse
+          POSTGRES_USER: mtg_market_scraper
+          POSTGRES_PASSWORD: mtg_market_scraper
+          POSTGRES_DB: mtg_market_scraper
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U tcg_pulse"
+          --health-cmd "pg_isready -U mtg_market_scraper"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 10
@@ -44,7 +44,7 @@ jobs:
 
       - name: Run tests
         env:
-          TEST_DATABASE_URL: postgresql://tcg_pulse:tcg_pulse@localhost:5432/tcg_pulse
+          TEST_DATABASE_URL: postgresql://mtg_market_scraper:mtg_market_scraper@localhost:5432/mtg_market_scraper
         run: uv run pytest
 
   publish:

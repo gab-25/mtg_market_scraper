@@ -6,17 +6,17 @@ deleteDatasources:
     orgId: 1
 
 datasources:
-  - name: TCG Pulse
-    uid: tcg_pulse
+  - name: MTG Market Scraper
+    uid: mtg_market_scraper
     type: grafana-postgresql-datasource
-    url: ${TCG_PULSE_DB_HOST}:5432
+    url: ${MTG_MARKET_SCRAPER_DB_HOST}:5432
     user: grafana_reader
     isDefault: true
     editable: false
     jsonData:
-      database: ${TCG_PULSE_DB_NAME}
-      sslmode: ${TCG_PULSE_DB_SSLMODE:-disable}
+      database: ${MTG_MARKET_SCRAPER_DB_NAME}
+      sslmode: ${MTG_MARKET_SCRAPER_DB_SSLMODE:-disable}
       postgresVersion: 1700
       timescaledb: true
     secureJsonData:
-      password: ${TCG_PULSE_DB_READER_PASSWORD}
+      password: ${MTG_MARKET_SCRAPER_DB_READER_PASSWORD}

@@ -1,5 +1,5 @@
 [project]
-name = "tcg-pulse"
+name = "mtg-market-scraper"
 version = "0.1.0"
 description = "Daily Cardmarket prices for Magic: The Gathering, shown in Grafana"
 readme = "README.md"

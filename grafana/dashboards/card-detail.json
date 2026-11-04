@@ -5,7 +5,7 @@
   "schemaVersion": 41,
   "version": 1,
   "tags": [
-    "tcg_pulse"
+    "mtg_market_scraper"
   ],
   "timezone": "browser",
   "refresh": "",
@@ -40,7 +40,7 @@
         "type": "query",
         "datasource": {
           "type": "grafana-postgresql-datasource",
-          "uid": "tcg_pulse"
+          "uid": "mtg_market_scraper"
         },
         "query": {
           "refId": "card",
@@ -85,7 +85,7 @@
       "title": "Trend",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 4,
@@ -98,7 +98,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -141,7 +141,7 @@
       "title": "Low",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 4,
@@ -154,7 +154,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -197,7 +197,7 @@
       "title": "Change 7 days",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 4,
@@ -210,7 +210,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -265,7 +265,7 @@
       "title": "Change 30 days",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 4,
@@ -278,7 +278,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -333,7 +333,7 @@
       "title": "Prices",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 10,
@@ -346,7 +346,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "time_series",
@@ -397,7 +397,7 @@
       "title": "Prices (foil)",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 10,
@@ -410,7 +410,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "time_series",
@@ -461,7 +461,7 @@
       "title": "Latest daily changes",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 10,
@@ -474,7 +474,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",

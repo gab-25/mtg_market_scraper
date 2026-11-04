@@ -23,7 +23,7 @@ def connect(url):
 
 def alembic_config():
     config = Config()
-    config.set_main_option('script_location', str(files('tcg_pulse') / 'migrations'))
+    config.set_main_option('script_location', str(files('mtg_market_scraper') / 'migrations'))
     return config
 
 

@@ -6,8 +6,8 @@ from alembic.autogenerate import compare_metadata
 from alembic.migration import MigrationContext
 
 from conftest import sql
-from tcg_pulse.db import migrate
-from tcg_pulse.models import Base
+from mtg_market_scraper.db import migrate
+from mtg_market_scraper.models import Base
 
 
 def test_schema_creates_tables(session):
@@ -39,7 +39,7 @@ def test_models_match_migrations(session):
 
 
 def reader_migration():
-    [path] = Path(__file__).parent.parent.glob('tcg_pulse/migrations/versions/*_let_grafana_reader_read_the_tables.py')
+    [path] = Path(__file__).parent.parent.glob('mtg_market_scraper/migrations/versions/*_let_grafana_reader_read_the_tables.py')
     spec = importlib.util.spec_from_file_location('reader_migration', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -79,7 +79,7 @@ def test_reader_role_is_not_created_without_a_password(session):
 
 def test_downgrade_takes_the_grants_back(session):
     from alembic import command
-    from tcg_pulse.db import alembic_config
+    from mtg_market_scraper.db import alembic_config
     config = alembic_config()
     config.attributes['connection'] = session.connection()
     command.downgrade(config, 'cd210b7fd8f7')

@@ -6,9 +6,9 @@ from decimal import Decimal
 import httpx
 import pytest
 
-from tcg_pulse import __main__ as cli
-from tcg_pulse.config import NONSINGLES_URL, PRICE_GUIDE_URL, SINGLES_URL
-from tcg_pulse.sync import archive, reimport, sync
+from mtg_market_scraper import __main__ as cli
+from mtg_market_scraper.config import NONSINGLES_URL, PRICE_GUIDE_URL, SINGLES_URL
+from mtg_market_scraper.sync import archive, reimport, sync
 from conftest import sql
 
 TODAY = date(2026, 11, 1)
@@ -134,7 +134,7 @@ def test_cli_exit_code(monkeypatch):
 
 
 def test_rerun_retries_a_day_whose_rising_failed(session, tmp_path, fake, sleeps, monkeypatch):
-    from tcg_pulse import sync as sync_module
+    from mtg_market_scraper import sync as sync_module
     real = sync_module.compute_rising
 
     def broken(session, as_of):

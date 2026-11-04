@@ -5,7 +5,7 @@
   "schemaVersion": 41,
   "version": 1,
   "tags": [
-    "tcg_pulse"
+    "mtg_market_scraper"
   ],
   "timezone": "browser",
   "refresh": "",
@@ -90,7 +90,7 @@
       "title": "Rising now",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 4,
@@ -103,7 +103,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -143,7 +143,7 @@
       "title": "Cards tracked daily",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 4,
@@ -156,7 +156,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -196,7 +196,7 @@
       "title": "History since",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 4,
@@ -209,7 +209,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -249,7 +249,7 @@
       "title": "Last import",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 4,
@@ -262,7 +262,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -302,7 +302,7 @@
       "title": "Rising cards",
       "datasource": {
         "type": "grafana-postgresql-datasource",
-        "uid": "tcg_pulse"
+        "uid": "mtg_market_scraper"
       },
       "gridPos": {
         "h": 20,
@@ -315,7 +315,7 @@
           "refId": "A",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "table",
@@ -326,7 +326,7 @@
           "refId": "B",
           "datasource": {
             "type": "grafana-postgresql-datasource",
-            "uid": "tcg_pulse"
+            "uid": "mtg_market_scraper"
           },
           "editorMode": "code",
           "format": "time_series",

@@ -13,7 +13,7 @@ from .config import CARDMARKET_TZ
 logger = logging.getLogger(__name__)
 
 FETCH_ATTEMPTS = 3
-HEADERS = {'User-Agent': 'TCGPulse/0.1', 'Accept': 'application/json;q=0.9,*/*;q=0.8'}
+HEADERS = {'User-Agent': 'MTGMarketScraper/0.1', 'Accept': 'application/json;q=0.9,*/*;q=0.8'}
 TRANSPORT = None  # replaced in tests
 
 PRICE_KEYS = ('trend', 'low', 'avg', 'avg1', 'avg7', 'avg30')

@@ -1,12 +1,12 @@
-"""Alembic environment: migrates the connection handed over by tcg_pulse.db.migrate, or DATABASE_URL."""
+"""Alembic environment: migrates the connection handed over by mtg_market_scraper.db.migrate, or DATABASE_URL."""
 
 import os
 
 from alembic import context
 from sqlalchemy import create_engine
 
-from tcg_pulse.db import engine_url
-from tcg_pulse.models import Base
+from mtg_market_scraper.db import engine_url
+from mtg_market_scraper.models import Base
 
 target_metadata = Base.metadata
 

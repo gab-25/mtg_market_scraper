@@ -461,7 +461,9 @@
                   "hideValue": true,
                   "lineWidth": 2,
                   "drawStyle": "line",
-                  "showPoints": "never"
+                  "showPoints": "never",
+                  "spanNulls": true,
+                  "insertNulls": false
                 }
               },
               {

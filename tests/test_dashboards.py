@@ -296,3 +296,11 @@ def test_card_detail_panels_do_not_overlap():
         area = {(x, y) for x in range(g['x'], g['x'] + g['w']) for y in range(g['y'], g['y'] + g['h'])}
         assert not cells & area, p['title']
         cells |= area
+
+
+def test_rising_sparkline_spans_missing_days():
+    """A day missing for every card (MTGJSON has gaps) must not break each Trend line in two."""
+    table = panel(load('rising.json'), 'Rising cards')
+    [cell] = [prop['value'] for o in table['fieldConfig']['overrides'] for prop in o['properties']
+              if prop['id'] == 'custom.cellOptions' and prop['value'].get('type') == 'sparkline']
+    assert cell['spanNulls'] is True and cell['insertNulls'] is False

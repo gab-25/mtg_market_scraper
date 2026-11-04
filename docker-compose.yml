@@ -1,6 +1,3 @@
-# A fixed project name: containers and volumes are mtg_market_scraper-*, whatever the folder is called.
-name: mtg_market_scraper
-
 services:
   db:
     # Pinned: upgrading needs ALTER EXTENSION timescaledb UPDATE on the existing volume.

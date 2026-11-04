@@ -8,10 +8,10 @@ from decimal import Decimal
 
 import pytest
 
-from tcg_pulse.backfill import backfill, history_rows, read_identifiers
-from tcg_pulse.cardmarket import CardRow, PriceRow
-from tcg_pulse.config import MTGJSON_IDENTIFIER_URLS, MTGJSON_PRICES_URL
-from tcg_pulse.store import insert_prices, upsert_cards
+from mtg_market_scraper.backfill import backfill, history_rows, read_identifiers
+from mtg_market_scraper.cardmarket import CardRow, PriceRow
+from mtg_market_scraper.config import MTGJSON_IDENTIFIER_URLS, MTGJSON_PRICES_URL
+from mtg_market_scraper.store import insert_prices, upsert_cards
 from conftest import sql
 
 TODAY = date(2026, 11, 4)

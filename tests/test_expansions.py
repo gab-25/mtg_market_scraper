@@ -1,5 +1,5 @@
-from tcg_pulse import expansions
-from tcg_pulse.expansions import derive_names, refresh_expansions
+from mtg_market_scraper import expansions
+from mtg_market_scraper.expansions import derive_names, refresh_expansions
 from conftest import sql
 
 

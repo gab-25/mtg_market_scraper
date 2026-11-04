@@ -13,11 +13,11 @@ WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project
 
-COPY tcg_pulse ./tcg_pulse
+COPY mtg_market_scraper ./mtg_market_scraper
 RUN useradd --create-home --uid 1000 app \
     && mkdir -p /app/data && chown app /app/data
 
 USER app
 VOLUME /app/data
-# One sync of every game, then exit: non-zero when a game is still missing after its retries.
-CMD ["python", "-m", "tcg_pulse", "sync"]
+# One sync of today's Magic prices, then exit: non-zero when it still failed after its retries.
+CMD ["python", "-m", "mtg_market_scraper", "sync"]

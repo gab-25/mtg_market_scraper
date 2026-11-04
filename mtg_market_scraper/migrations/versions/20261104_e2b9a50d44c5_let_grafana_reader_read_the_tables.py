@@ -1,7 +1,7 @@
 """Let grafana_reader read the tables
 
 Grafana queries the database as grafana_reader, a role that can only read. This migration creates it
-when it is missing and TCG_PULSE_DB_READER_PASSWORD is set (creating a role needs CREATEROLE), and lets
+when it is missing and MTG_MARKET_SCRAPER_DB_READER_PASSWORD is set (creating a role needs CREATEROLE), and lets
 it read every table of the schema, including the tables later migrations will add.
 
 Roles are server-wide: the downgrade takes the grants back but never drops the role, and changing the
@@ -32,7 +32,7 @@ def ensure_role(connection, name, password):
     if connection.exec_driver_sql('SELECT 1 FROM pg_roles WHERE rolname = %s', (name,)).first():
         return
     if not password:
-        logger.warning('Role %s does not exist and TCG_PULSE_DB_READER_PASSWORD is not set: '
+        logger.warning('Role %s does not exist and MTG_MARKET_SCRAPER_DB_READER_PASSWORD is not set: '
                        'create it by hand, then run the sync again', name)
         return
     driver = connection.connection.driver_connection
@@ -59,7 +59,7 @@ def grants(action):
 
 
 def upgrade():
-    ensure_role(op.get_bind(), ROLE, os.environ.get('TCG_PULSE_DB_READER_PASSWORD'))
+    ensure_role(op.get_bind(), ROLE, os.environ.get('MTG_MARKET_SCRAPER_DB_READER_PASSWORD'))
     op.execute(grants('GRANT'))
 
 

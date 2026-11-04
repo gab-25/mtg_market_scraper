@@ -3,15 +3,15 @@ services:
     # Pinned: upgrading needs ALTER EXTENSION timescaledb UPDATE on the existing volume.
     image: timescale/timescaledb:2.30.2-pg17
     environment:
-      POSTGRES_USER: tcg_pulse
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tcg_pulse}
-      POSTGRES_DB: tcg_pulse
+      POSTGRES_USER: mtg_market_scraper
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mtg_market_scraper}
+      POSTGRES_DB: mtg_market_scraper
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
       - "127.0.0.1:5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tcg_pulse -d tcg_pulse"]
+      test: ["CMD-SHELL", "pg_isready -U mtg_market_scraper -d mtg_market_scraper"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -25,9 +25,9 @@ services:
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_AUTH_DISABLE_LOGIN_FORM: "false"
       GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/rising.json
-      TCG_PULSE_DB_HOST: db
-      TCG_PULSE_DB_NAME: tcg_pulse
-      TCG_PULSE_DB_READER_PASSWORD: ${TCG_PULSE_DB_READER_PASSWORD:?set TCG_PULSE_DB_READER_PASSWORD in .env}
+      MTG_MARKET_SCRAPER_DB_HOST: db
+      MTG_MARKET_SCRAPER_DB_NAME: mtg_market_scraper
+      MTG_MARKET_SCRAPER_DB_READER_PASSWORD: ${MTG_MARKET_SCRAPER_DB_READER_PASSWORD:?set MTG_MARKET_SCRAPER_DB_READER_PASSWORD in .env}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
@@ -43,9 +43,9 @@ services:
     # Runs once on `docker compose up`; run it again with `docker compose run --rm sync`.
     build: .
     environment:
-      DATABASE_URL: postgresql://tcg_pulse:${POSTGRES_PASSWORD:-tcg_pulse}@db:5432/tcg_pulse
+      DATABASE_URL: postgresql://mtg_market_scraper:${POSTGRES_PASSWORD:-mtg_market_scraper}@db:5432/mtg_market_scraper
       # The migrations create the read-only grafana_reader role with it, when the role is missing.
-      TCG_PULSE_DB_READER_PASSWORD: ${TCG_PULSE_DB_READER_PASSWORD:?set TCG_PULSE_DB_READER_PASSWORD in .env}
+      MTG_MARKET_SCRAPER_DB_READER_PASSWORD: ${MTG_MARKET_SCRAPER_DB_READER_PASSWORD:?set MTG_MARKET_SCRAPER_DB_READER_PASSWORD in .env}
     volumes:
       - syncdata:/app/data
     depends_on:

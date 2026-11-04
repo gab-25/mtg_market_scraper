@@ -1,4 +1,4 @@
-"""Command line: `python -m tcg_pulse sync` (the daily run), `reimport` and `backfill`."""
+"""Command line: `python -m mtg_market_scraper sync` (the daily run), `reimport` and `backfill`."""
 
 import argparse
 import logging
@@ -12,7 +12,7 @@ from .sync import reimport, sync
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(prog='tcg_pulse')
+    parser = argparse.ArgumentParser(prog='mtg_market_scraper')
     commands = parser.add_subparsers(dest='command', required=True)
     commands.add_parser('sync', help="import today's Magic prices, retrying failures")
     again = commands.add_parser('reimport', help='import an archived day again')

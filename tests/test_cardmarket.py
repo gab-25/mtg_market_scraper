@@ -4,9 +4,9 @@ from decimal import Decimal
 import httpx
 import pytest
 
-from tcg_pulse import cardmarket
-from tcg_pulse.cardmarket import guide_date, parse_prices, parse_products
-from tcg_pulse.config import CARDMARKET_TZ
+from mtg_market_scraper import cardmarket
+from mtg_market_scraper.cardmarket import guide_date, parse_prices, parse_products
+from mtg_market_scraper.config import CARDMARKET_TZ
 
 
 def guide(*entries, created='2026-11-01T02:47:00+0100'):

@@ -310,3 +310,8 @@ def test_card_detail_charts_span_missing_days():
     for p in load('card-detail.json')['panels']:
         if p['type'] == 'timeseries':
             assert p['fieldConfig']['defaults']['custom']['spanNulls'] is True, p['title']
+
+
+def test_card_detail_price_charts_are_full_width():
+    for title in ('Prices', 'Prices (foil)'):
+        assert panel(load('card-detail.json'), title)['gridPos']['w'] == 24, title

@@ -84,6 +84,12 @@ about **04:30 Europe/Rome**, after Cardmarket publishes the guides (~02:45).
 
 - A failed import — network error, or a guide still dated yesterday — is retried up to **4 attempts,
   15 minutes apart** (about 45 minutes at most).
+- A guide still dated an earlier day that was never imported (Cardmarket published it too late for
+  that day's sync) is imported under its own day before waiting for today's, so a late guide is not
+  lost when the next one overwrites it. Card names, rising and expansion names only follow it when it
+  is the most recent day stored.
+- Run it again later in the day (e.g. at 12:30 and 20:30) to catch a guide published late: a day
+  already imported exits at once.
 - The command exits non-zero if the import still failed, so the scheduler can report it.
 - Idempotent: a day fully imported (prices, rising, names) is skipped, so a manual rerun only
   does what is missing.

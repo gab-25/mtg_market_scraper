@@ -76,15 +76,23 @@ def refresh_names(session, day, data_dir, load_nonsingles, load_sets):
 
 
 def import_day(session, today, data_dir, fetch=fetch_json, fetch_sets=fetch_mtgjson_sets):
+    """Import the published guide: today's, or an earlier day's never imported (Cardmarket published it
+    too late for that day's sync, and the next guide would overwrite it).
+
+    Card names, rising and expansion names only follow a day at least as recent as the stored prices."""
     guide = fetch(PRICE_GUIDE_URL)
-    if guide_date(guide) != today:
-        raise GuideNotReady(f'price guide is dated {guide_date(guide)}, expected {today}')
+    day = guide_date(guide)
+    if day > today or (day < today and imported(session, day)):
+        raise GuideNotReady(f'price guide is dated {day}, expected {today}')
+    latest = session.scalar(select(func.max(Price.day)))
+    is_latest = latest is None or day >= latest
     products = fetch(SINGLES_URL)
-    archive(data_dir, today, 'price_guide', guide)
-    archive(data_dir, today, 'products_singles', products)
-    result = store(session, guide, products)
-    compute_rising(session, today)
-    refresh_names(session, today, data_dir, lambda: fetch(NONSINGLES_URL), fetch_sets)
+    archive(data_dir, day, 'price_guide', guide)
+    archive(data_dir, day, 'products_singles', products)
+    result = store(session, guide, products, update_cards=is_latest)
+    if is_latest:
+        compute_rising(session, day)
+        refresh_names(session, day, data_dir, lambda: fetch(NONSINGLES_URL), fetch_sets)
     return result
 
 
@@ -105,7 +113,10 @@ def sync(session, today, data_dir, fetch=fetch_json, sleep=time.sleep, fetch_set
         else:
             logger.info('%d cards, %d prices for %s', result.cards, result.prices, result.day)
             log_run(session, attempt, started, 'ok', guide_date=result.day, cards=result.cards, prices=result.prices)
-            return True
+            if result.day == today:
+                return True
+            logger.warning('Attempt %d/%d imported the late guide of %s; still waiting for %s',
+                           attempt, ATTEMPTS, result.day, today)
         if attempt < ATTEMPTS:
             sleep(RETRY_SECONDS)
     logger.error('Giving up on %s', today)

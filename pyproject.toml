@@ -1,6 +1,6 @@
 [project]
 name = "mtg-market-scraper"
-version = "0.1.0"
+version = "0.1.1"
 description = "Daily Cardmarket prices for Magic: The Gathering, shown in Grafana"
 readme = "README.md"
 requires-python = ">=3.13"

@@ -13,6 +13,7 @@ from conftest import sql
 
 TODAY = date(2026, 11, 1)
 TODAY_STAMP = '2026-11-01T02:47:00+0100'
+YESTERDAY = TODAY - timedelta(days=1)
 YESTERDAY_STAMP = '2026-10-31T02:47:00+0100'
 
 
@@ -113,10 +114,48 @@ def test_sync_imports_and_archives(session, tmp_path, fake, sleeps):
 
 
 def test_guide_not_ready_counts_as_attempt(session, tmp_path, fake, sleeps):
+    yesterday = FakeCardmarket()
+    yesterday.stamps = [YESTERDAY_STAMP]
+    sync(session, YESTERDAY, tmp_path, fetch=yesterday, sleep=sleeps.append, fetch_sets=FakeMtgjson())
     fake.stamps = [YESTERDAY_STAMP, YESTERDAY_STAMP, TODAY_STAMP]
     assert run(session, tmp_path, fake, sleeps) is True
     assert sleeps == [900, 900]
-    assert runs(session) == [('failed',), ('failed',), ('ok',)]
+    assert runs(session) == [('ok',), ('failed',), ('failed',), ('ok',)]
+
+
+def test_late_guide_of_a_missing_day_is_imported(session, tmp_path, fake, sleeps):
+    """Yesterday's guide, published too late for yesterday's sync, is still imported under its own day."""
+    fake.stamps = [YESTERDAY_STAMP, YESTERDAY_STAMP, TODAY_STAMP]
+    assert run(session, tmp_path, fake, sleeps) is True
+    assert sleeps == [900, 900]
+    assert sql(session, 'SELECT status, guide_date FROM import_run ORDER BY id').fetchall() == [
+        ('ok', YESTERDAY), ('failed', None), ('ok', TODAY)]
+    assert sql(session, 'SELECT day, count(*) FROM price GROUP BY day ORDER BY day').fetchall() == [
+        (YESTERDAY, 2), (TODAY, 2)]
+    assert (tmp_path / '2026-10-31' / 'price_guide.json.gz').exists()
+
+
+def test_late_guide_alone_does_not_finish_today(session, tmp_path, fake, sleeps):
+    fake.stamps = [YESTERDAY_STAMP] * 4
+    assert run(session, tmp_path, fake, sleeps) is False
+    assert sql(session, 'SELECT status, guide_date FROM import_run ORDER BY id').fetchall() == [
+        ('ok', YESTERDAY), ('failed', None), ('failed', None), ('failed', None)]
+
+
+def test_late_guide_older_than_stored_prices_keeps_current_names_and_rising(session, tmp_path, fake, sleeps,
+                                                                            monkeypatch):
+    """A day older than the latest prices stored (e.g. backfilled) must not roll names or rising back."""
+    sql(session, "INSERT INTO card (id_product, name) VALUES (1, 'Current')")
+    sql(session, "INSERT INTO price (day, id_product, trend) VALUES (%s, 1, 1.0)", (TODAY,))
+    session.commit()
+    fake.stamps = [YESTERDAY_STAMP] * 4
+    calls = []
+    from mtg_market_scraper import sync as sync_module
+    monkeypatch.setattr(sync_module, 'compute_rising', lambda session, as_of: calls.append(as_of))
+    run(session, tmp_path, fake, sleeps)
+    assert calls == []
+    assert sql(session, 'SELECT name FROM card WHERE id_product = 1').fetchone()[0] == 'Current'
+    assert sql(session, 'SELECT count(*) FROM price WHERE day = %s', (YESTERDAY,)).fetchone()[0] == 2
 
 
 def test_failing_import_gets_four_attempts(session, tmp_path, fake, sleeps):

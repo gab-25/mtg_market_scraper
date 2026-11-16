@@ -19,9 +19,11 @@ Grafana. Magic is the only game: there is no game column or selector anywhere.
   names can be fixed by hand in
   [`mtg_market_scraper/expansion_overrides.json`](mtg_market_scraper/expansion_overrides.json) (`{"6381": "Name"}`);
   an expansion with no name shows its id, e.g. `#5229`.
-- **Grafana** with two dashboards, provisioned from [`grafana/`](grafana/): **Rising** (pick the
-  window, normal/foil, thresholds) and **Card detail** (search a card, its image from
-  [Scryfall](https://scryfall.com), price history). Login only.
+- **Grafana** with three dashboards, provisioned from [`grafana/`](grafana/): **Rising** (pick the
+  window, normal/foil, thresholds), **Card detail** (search a card, its image from
+  [Scryfall](https://scryfall.com), price history) and **Imports** (whether today's guide is in,
+  every sync attempt with its error, cards priced per day, days with no prices and how to fill
+  them). Login only.
 
 ## Running locally
 
@@ -93,7 +95,7 @@ about **04:30 Europe/Rome**, after Cardmarket publishes the guides (~02:45).
 - The command exits non-zero if the import still failed, so the scheduler can report it.
 - Idempotent: a day fully imported (prices, rising, names) is skipped, so a manual rerun only
   does what is missing.
-- Every attempt is logged in the `import_run` table (shown on the Rising dashboard as "Last import").
+- Every attempt is logged in the `import_run` table (shown on the Imports dashboard, and on Rising as "Last import").
 - Every downloaded file is kept gzipped under `DATA_DIR/<date>/` (a few MB a day). To import an
   archived day again, replacing that day's prices (e.g. after fixing an import bug):
   `python -m mtg_market_scraper reimport --date 2026-11-01`.

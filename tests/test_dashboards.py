@@ -2,9 +2,10 @@
 
 import json
 import re
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -76,7 +77,7 @@ def seed_cards(session):
     sql(session, "UPDATE expansion SET name = 'Origins' WHERE id_expansion = 6286")
 
 
-@pytest.mark.parametrize('name', ['rising.json', 'card-detail.json'])
+@pytest.mark.parametrize('name', ['rising.json', 'card-detail.json', 'imports.json'])
 def test_queries_run_on_empty_db(session, name):
     dashboard = load(name)
     variables = {**RISING_DEFAULTS, 'search': '', 'card': '0'}
@@ -177,7 +178,7 @@ def test_dashboards_use_mtg_market_scraper_datasource_and_english():
                 assert var['datasource']['uid'] == 'mtg_market_scraper'
         text = path.read_text()
         assert 'Gioco' not in text and 'Finestra' not in text
-    assert uids == {'rising', 'card-detail'}
+    assert uids == {'rising', 'card-detail', 'imports'}
 
 
 def card_options(session, search):
@@ -288,9 +289,10 @@ def test_card_detail_shows_the_scryfall_image_of_the_selected_card():
     assert 'https://api.scryfall.com/cards/cardmarket/${card:percentencode}?format=image' in image['options']['content']
 
 
-def test_card_detail_panels_do_not_overlap():
+@pytest.mark.parametrize('name', ['card-detail.json', 'imports.json'])
+def test_panels_do_not_overlap(name):
     cells = set()
-    for p in load('card-detail.json')['panels']:
+    for p in load(name)['panels']:
         g = p['gridPos']
         assert g['x'] + g['w'] <= 24, p['title']
         area = {(x, y) for x in range(g['x'], g['x'] + g['w']) for y in range(g['y'], g['y'] + g['h'])}
@@ -315,3 +317,81 @@ def test_card_detail_charts_span_missing_days():
 def test_card_detail_price_charts_are_full_width():
     for title in ('Prices', 'Prices (foil)'):
         assert panel(load('card-detail.json'), title)['gridPos']['w'] == 24, title
+
+
+def import_run(session, started, status, attempt=1, guide=None, error=None, finished=None):
+    sql(session, 'INSERT INTO import_run (attempt, started_at, finished_at, guide_date, status, cards, prices, error) '
+                 'VALUES (%s, %s, %s, %s, %s, %s, %s, %s)',
+        (attempt, started, finished or started + timedelta(minutes=2), guide, status,
+         10 if status == 'ok' else None, 20 if status == 'ok' else None, error))
+
+
+ROME_NOW = "now() AT TIME ZONE 'Europe/Rome'"
+
+
+def rome_today(session):
+    return sql(session, f'SELECT ({ROME_NOW})::date').scalar()
+
+
+def rome_time(day, hour):
+    return datetime(day.year, day.month, day.day, hour, 30, tzinfo=ZoneInfo('Europe/Rome'))
+
+
+def today_status(session):
+    return run_panel(session, load('imports.json'), 'Today')[1][0][0]
+
+
+def test_imports_today(session):
+    today = rome_today(session)
+    assert today_status(session) == 'Not yet'
+    import_run(session, rome_time(today - timedelta(days=1), 4), 'ok', guide=today - timedelta(days=1))
+    assert today_status(session) == 'Not yet'
+    import_run(session, rome_time(today, 4), 'failed', error='HTTPError: 503')
+    import_run(session, rome_time(today, 4) + timedelta(minutes=15), 'failed', attempt=2, error='HTTPError: 503')
+    assert today_status(session) == 'Failing · 2 failed'
+    import_run(session, rome_time(today, 5), 'ok', attempt=3, guide=today)
+    assert today_status(session) == 'Imported'
+    mappings = panel(load('imports.json'), 'Today')['fieldConfig']['defaults']['mappings']
+    patterns = [m['options']['pattern'] for m in mappings]
+    assert any(re.fullmatch(p, 'Failing · 2 failed') for p in patterns)
+
+
+def test_imports_stats_and_attempts(session):
+    import_run(session, datetime(2026, 11, 1, 3, 30, tzinfo=timezone.utc), 'failed', error='ValueError: stale guide')
+    import_run(session, datetime(2026, 11, 1, 3, 45, tzinfo=timezone.utc), 'ok', attempt=2, guide=date(2026, 10, 31))
+    import_run(session, datetime(2026, 11, 1, 4, 0, tzinfo=timezone.utc), 'ok', attempt=3, guide=date(2026, 11, 1))
+    dashboard = load('imports.json')
+    assert run_panel(session, dashboard, 'Failed attempts')[1] == [(1,)]
+    assert run_panel(session, dashboard, 'Last import')[1] == [('2026-11-01 05:02 · ok',)]
+    columns, rows = run_panel(session, dashboard, 'Attempts per day')
+    assert columns == ['time', 'OK', 'Failed'] and rows == [(datetime(2026, 11, 1), 2, 1)]
+    columns, rows = run_panel(session, dashboard, 'Attempts')
+    attempts = [dict(zip(columns, r)) for r in rows]
+    assert [a['Attempt'] for a in attempts] == [3, 2, 1]
+    assert [a['Note'] for a in attempts] == [None, 'late guide', None]
+    assert attempts[2]['Error'] == 'ValueError: stale guide' and float(attempts[0]['Duration']) == 120
+
+
+def test_imports_prices_and_missing_days(session):
+    upsert_cards(session, [CardRow(1, 'Card', None, None, None), CardRow(2, 'Other', None, None, None)])
+    today = rome_today(session)
+    first = today - timedelta(days=5)
+    for day in (first, first + timedelta(days=1), first + timedelta(days=4)):
+        insert_prices(session, day, [PriceRow(1, trend=Decimal(1)), PriceRow(2, trend=Decimal(1))])
+    dashboard = load('imports.json')
+    _, rows = run_panel(session, dashboard, 'Cards priced per day')
+    assert rows == [(datetime.combine(day, datetime.min.time()), 2)
+                    for day in (first, first + timedelta(days=1), first + timedelta(days=4))]
+    assert run_panel(session, dashboard, 'Latest prices')[1] == [(f'{today - timedelta(days=1)} · 1 d ago',)]
+    columns, rows = run_panel(session, dashboard, 'Missing days')
+    missing = [dict(zip(columns, r)) for r in rows]
+    # Today is left out: before the sync runs it is not missing yet.
+    assert [m['Day'] for m in missing] == [first + timedelta(days=3), first + timedelta(days=2)]
+    assert missing[0]['Fill with'] == 'backfill (MTGJSON trend only)'
+
+
+def test_imports_on_an_empty_db(session):
+    dashboard = load('imports.json')
+    assert run_panel(session, dashboard, 'Latest prices')[1] == [('—',)]
+    assert run_panel(session, dashboard, 'Last import')[1] == [('never',)]
+    assert run_panel(session, dashboard, 'Missing days')[1] == []
